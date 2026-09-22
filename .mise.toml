@@ -1,0 +1,5 @@
+# Versões fixadas para que a máquina de desenvolvimento compile com o mesmo
+# Java da imagem de produção, e não com o que estiver instalado no sistema.
+[tools]
+java  = "temurin-21.0.12+101.0.LTS"
+maven = "3.9.16"

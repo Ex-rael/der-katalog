@@ -1,0 +1,27 @@
+# Segredos — nunca versionados (§4.4 do plano de segurança)
+secrets/
+*.env
+.env.*
+!.env.example
+
+# Backups
+backups/
+
+# Build
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Fotos enviadas em desenvolvimento
+fotos/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Sistema
+.DS_Store
+*.log
