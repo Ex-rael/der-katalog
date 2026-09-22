@@ -1,0 +1,29 @@
+services:
+  banco:
+    # Fixar por digest antes de publicar (§A06):
+    #   docker buildx imagetools inspect postgres:16-alpine
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chimaclub
+      POSTGRES_USER: chimaclub
+      POSTGRES_PASSWORD_FILE: /run/secrets/senha_banco
+    volumes:
+      - dados_pg:/var/lib/postgresql/data
+      - ./backups:/backups
+    ports:
+      - "127.0.0.1:5432:5432"   # nunca 0.0.0.0
+    secrets: [senha_banco]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chimaclub -d chimaclub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dados_pg:
+
+secrets:
+  senha_banco:
+    file: ./secrets/senha_banco.txt
