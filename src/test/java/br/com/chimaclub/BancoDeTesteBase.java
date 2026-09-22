@@ -4,8 +4,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Base de todo teste de integração. Sobe um PostgreSQL 16 real, porque o
@@ -13,19 +11,24 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * existe em banco em memória, e testar contra um substituto esconderia
  * justamente os erros que importam.
  *
- * O contêiner é estático, então sobe uma vez por execução da suíte e não
- * uma vez por classe de teste.
+ * O contêiner é iniciado uma única vez, no carregamento da classe, e nunca
+ * parado explicitamente: quem o remove ao fim da execução é o Ryuk do
+ * próprio Testcontainers. A anotação @Container faria o oposto — pararia o
+ * contêiner ao fim de cada classe de teste, enquanto o Spring reaproveita o
+ * contexto em cache apontando para a porta que acabou de morrer.
  */
-@Testcontainers
 @SpringBootTest
 public abstract class BancoDeTesteBase {
 
-    @Container
     static final PostgreSQLContainer<?> BANCO =
             new PostgreSQLContainer<>("postgres:16-alpine")
                     .withDatabaseName("chimaclub")
                     .withUsername("chimaclub")
                     .withPassword("senha-de-teste");
+
+    static {
+        BANCO.start();
+    }
 
     @DynamicPropertySource
     static void propriedades(DynamicPropertyRegistry registro) {
