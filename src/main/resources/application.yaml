@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: chimaclub
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/chimaclub
+    username: chimaclub
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: America/Sao_Paulo
+  flyway:
+    enabled: true
+    # Nunca em produção: um clean acidental apaga o catálogo inteiro (§A08).
+    clean-disabled: true
+
+server:
+  port: 8080
+  # Não anunciar o servidor nem a sua versão (§A05).
+  server-header: ""
+  error:
+    include-stacktrace: never
+    include-message: never
+    whitelabel:
+      enabled: false
+
+app:
+  porta-admin: 8081
+  # Dentro do contêiner precisa ser 0.0.0.0: 127.0.0.1 ali é o loopback do
+  # próprio contêiner, e a porta ficaria inalcançável pela publicação do
+  # Docker. O perfil prod sobrescreve este valor.
+  endereco-bind: 127.0.0.1
