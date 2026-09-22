@@ -1,0 +1,56 @@
+package br.com.chimaclub.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+/**
+ * Uma cadeia de segurança por porta, casada pela porta de chegada da
+ * requisição e não pelo caminho da URL. Assim, mesmo que algum dia uma
+ * configuração de roteamento mude, uma requisição a /admin que chegue pela
+ * porta pública continua sendo negada: a política é escolhida antes de o
+ * caminho ser considerado.
+ */
+@Configuration
+public class SegurancaConfig {
+
+    @Bean
+    @Order(1)
+    SecurityFilterChain cadeiaAdmin(HttpSecurity http,
+                                    @Value("${app.porta-admin:8081}") int portaAdmin) throws Exception {
+        http.securityMatcher(requisicao -> requisicao.getLocalPort() == portaAdmin)
+            .authorizeHttpRequests(a -> a
+                .requestMatchers("/admin/login", "/css/**", "/js/**").permitAll()
+                .anyRequest().hasRole("ADMIN"))
+            // Provisório: o login por formulário, o TOTP e o bloqueio por
+            // tentativa entram na Fase 2. Aqui basta exigir autenticação,
+            // para o teste de isolamento distinguir "não existe" de
+            // "existe e exige credencial".
+            .httpBasic(Customizer.withDefaults())
+            .csrf(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    SecurityFilterChain cadeiaPublica(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(a -> a
+                // Negação explícita antes de qualquer liberação: o painel e as
+                // métricas não existem para quem vem da internet.
+                .requestMatchers("/admin/**", "/actuator/**").denyAll()
+                .requestMatchers(HttpMethod.GET, "/", "/saude", "/busca", "/produto/**",
+                                 "/fotos/**", "/css/**", "/js/**", "/fontes/**",
+                                 "/sitemap.xml", "/robots.txt").permitAll()
+                .requestMatchers(HttpMethod.POST, "/produto/*/whatsapp").permitAll()
+                // Política padrão: tudo o que não foi liberado acima é negado.
+                .anyRequest().denyAll())
+            .csrf(c -> c.ignoringRequestMatchers("/produto/*/whatsapp"))
+            .anonymous(Customizer.withDefaults());
+        return http.build();
+    }
+}
