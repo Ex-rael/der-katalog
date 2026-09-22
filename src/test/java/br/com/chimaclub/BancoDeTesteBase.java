@@ -30,10 +30,22 @@ public abstract class BancoDeTesteBase {
         BANCO.start();
     }
 
+    /**
+     * Porta administrativa fixa e fora da faixa usual, para o teste de
+     * isolamento conseguir bater nela.
+     *
+     * Estes valores vêm por @DynamicPropertySource, e não por um
+     * application.yaml em src/test/resources: um arquivo de mesmo nome no
+     * classpath de teste encobre o de produção por inteiro, e a suíte
+     * passaria a exercitar uma configuração que não é a que vai ao ar.
+     */
+    static final int PORTA_ADMIN_DE_TESTE = 18081;
+
     @DynamicPropertySource
     static void propriedades(DynamicPropertyRegistry registro) {
         registro.add("spring.datasource.url", BANCO::getJdbcUrl);
         registro.add("spring.datasource.username", BANCO::getUsername);
         registro.add("spring.datasource.password", BANCO::getPassword);
+        registro.add("app.porta-admin", () -> PORTA_ADMIN_DE_TESTE);
     }
 }

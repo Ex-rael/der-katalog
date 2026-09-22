@@ -1,5 +1,0 @@
-# A porta administrativa é fixa no teste, para que o teste de isolamento
-# consiga bater nela. 18081 é escolhida por estar fora da faixa usual.
-app:
-  porta-admin: 18081
-  endereco-bind: 127.0.0.1
