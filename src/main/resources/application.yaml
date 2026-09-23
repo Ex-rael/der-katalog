@@ -1,6 +1,12 @@
 spring:
   application:
     name: chimaclub
+  servlet:
+    multipart:
+      # 10 MB por arquivo e 25 MB por requisição (§A04). O Tomcat recusa
+      # antes de a requisição chegar à aplicação.
+      max-file-size: 10MB
+      max-request-size: 25MB
   datasource:
     url: jdbc:postgresql://127.0.0.1:5432/chimaclub
     username: chimaclub
@@ -44,6 +50,10 @@ server:
 
 app:
   porta-admin: 8081
+  # Fora do diretório da aplicação, e montado sem permissão de execução em
+  # produção (§A08). Em desenvolvimento fica sob ./fotos, que o .gitignore
+  # já ignora.
+  diretorio-fotos: ${CHIMACLUB_DIRETORIO_FOTOS:./fotos}
   # Chave de 32 bytes em base64, que cifra o segredo do segundo fator em
   # repouso. Em produção vem de variável de ambiente e nunca do repositório;
   # este valor de desenvolvimento não protege nada e não deve ir ao ar.

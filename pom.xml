@@ -27,6 +27,8 @@
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <uuid-creator.version>6.1.1</uuid-creator.version>
+    <thumbnailator.version>0.4.20</thumbnailator.version>
+    <webp-imageio.version>0.1.6</webp-imageio.version>
   </properties>
 
   <dependencies>
@@ -66,6 +68,22 @@
       <groupId>com.github.f4b6a3</groupId>
       <artifactId>uuid-creator</artifactId>
       <version>${uuid-creator.version}</version>
+    </dependency>
+
+    <!--
+      Processamento de imagem. O ImageIO do Java lê WebP mas não grava; o
+      escritor vem da nativa do webp-imageio, cujo carregamento é conferido
+      por teste (ProcessadorImagemTest.saidaEhWebpLegivel).
+    -->
+    <dependency>
+      <groupId>net.coobird</groupId>
+      <artifactId>thumbnailator</artifactId>
+      <version>${thumbnailator.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sejda.imageio</groupId>
+      <artifactId>webp-imageio</artifactId>
+      <version>${webp-imageio.version}</version>
     </dependency>
 
     <dependency>
