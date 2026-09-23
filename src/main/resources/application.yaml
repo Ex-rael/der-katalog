@@ -52,6 +52,35 @@ server:
         # e um cookie Secure simplesmente não seria enviado.
         secure: false
 
+# ---------------------------------------------------------------
+# Actuator: apenas health e info, e só na porta administrativa.
+#
+# env, heapdump, threaddump, beans, configprops e mappings ficam de fora por
+# omissão — a lista abaixo é de inclusão, não de exclusão, então um ponto
+# novo que o Spring passe a oferecer numa versão futura não aparece sozinho.
+# ---------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      # Banco e disco só para quem está autenticado: para o anônimo, o
+      # health diz apenas se a aplicação responde.
+      show-details: when-authorized
+      show-components: when-authorized
+    info:
+      access: read-only
+  info:
+    env:
+      enabled: false
+    java:
+      enabled: false
+    os:
+      enabled: false
+
 app:
   porta-admin: 8081
   # HSTS só onde existe TLS. Anunciá-lo sobre http local faria o navegador

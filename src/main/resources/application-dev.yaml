@@ -1,0 +1,25 @@
+# Perfil de desenvolvimento.
+#
+# É frouxo de propósito, e diz isso por escrito: endurecer não pode
+# significar que trabalhar na máquina local vire um martírio. O que está
+# desligado aqui está ligado em application-prod.yaml, e a diferença entre
+# os dois arquivos é a lista do que produção aperta.
+
+app:
+  # O segundo fator fica desligado, como prevê a §8.3 do documento de
+  # projeto. Senão cada reinício da aplicação pediria o autenticador.
+  segundo-fator-obrigatorio: false
+  hsts-ligado: false
+  endereco-bind: 127.0.0.1
+
+server:
+  servlet:
+    session:
+      cookie:
+        # Em http local, um cookie Secure simplesmente não seria enviado, e
+        # o painel ficaria inacessível.
+        secure: false
+
+logging:
+  level:
+    br.com.chimaclub: DEBUG

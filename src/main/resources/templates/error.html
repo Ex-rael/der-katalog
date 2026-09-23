@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Página não encontrada — Chima Club</title>
+  <link rel="stylesheet" th:href="@{/css/chimaclub.css}">
+  <link rel="icon" th:href="@{/img/selo-chimaclub.png}">
+</head>
+<body>
+
+<!--/*
+  Página de erro única, genérica de propósito (§A05).
+
+  Ela não mostra o código do status, a exceção, o caminho pedido nem a hora:
+  cada um desses detalhes ajuda quem está sondando a mapear a aplicação, e
+  nenhum ajuda a dona da loja nem o cliente. Quem precisa do detalhe é quem
+  lê o log, e lá ele está, com identificador de correlação.
+*/-->
+<main class="pagina-de-erro">
+  <img class="selo" th:src="@{/img/selo-chimaclub.png}" alt="Selo Chima Club" width="120" height="120">
+
+  <h1>Não encontramos esta página</h1>
+
+  <p>
+    O endereço pode ter mudado, ou a peça que você procurava saiu do catálogo.
+  </p>
+
+  <a class="botao-voltar" th:href="@{/}">Ver o catálogo</a>
+</main>
+
+</body>
+</html>

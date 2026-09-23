@@ -117,6 +117,14 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
+    <!--
+      Actuator apenas para health e info, e só na porta administrativa.
+      env, heapdump e threaddump ficam desligados por configuração (§A05).
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
     <!-- th:if="${#authorization...}" e o token CSRF nos formulários -->
     <dependency>
       <groupId>org.thymeleaf.extras</groupId>

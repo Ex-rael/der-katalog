@@ -1,0 +1,38 @@
+# Perfil de produção.
+#
+# Tudo o que o desenvolvimento afrouxa para ser usável, aqui volta ao lugar.
+
+app:
+  # §A07: obrigatório. A senha sozinha não abre o painel.
+  segundo-fator-obrigatorio: true
+  # §A02: ligado só depois de confirmar que o domínio responde em HTTPS.
+  hsts-ligado: true
+  # Dentro do contêiner, 127.0.0.1 é o loopback do próprio contêiner, e a
+  # porta ficaria inalcançável pela publicação do Docker. Quem confina é o
+  # "127.0.0.1:8080:8080" do Compose, o UFW e o Tailscale.
+  endereco-bind: 0.0.0.0
+  diretorio-fotos: /var/chimaclub/fotos
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+
+spring:
+  jpa:
+    # Nenhuma consulta no log de produção: elas levam junto os valores dos
+    # parâmetros, e um deles pode ser algo que não deve ser gravado.
+    show-sql: false
+  flyway:
+    clean-disabled: true
+
+logging:
+  level:
+    root: INFO
+    br.com.chimaclub: INFO
+    # O log de auditoria vai para arquivo próprio, com retenção de 90 dias
+    # (§A09). A rotação é feita pelo logrotate do sistema.
+    auditoria: INFO
+  file:
+    name: /var/log/chimaclub/aplicacao.log

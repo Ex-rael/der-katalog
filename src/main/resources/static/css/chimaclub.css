@@ -294,3 +294,21 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{
    próprio elemento, e a CSP sem 'unsafe-inline' bloqueia estilo em linha —
    inclusive em atributo. */
 .definicoes-de-simbolo{position:absolute}
+
+/* ---------- Página de erro ---------- */
+.pagina-de-erro{
+  min-height:100vh;background:var(--verde);color:var(--creme);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:48px 24px;gap:8px;
+}
+.pagina-de-erro .selo{margin-bottom:24px}
+.pagina-de-erro h1{
+  font-family:var(--f-display);font-weight:400;
+  font-size:clamp(1.5rem,5vw,2.2rem);
+}
+.pagina-de-erro p{max-width:36ch;color:var(--nevoa);margin-top:8px}
+.botao-voltar{
+  display:inline-block;margin-top:32px;padding:13px 32px;
+  text-decoration:none;border:1px solid var(--creme);border-radius:999px;
+}
+.botao-voltar:hover{background:var(--creme);color:var(--verde)}

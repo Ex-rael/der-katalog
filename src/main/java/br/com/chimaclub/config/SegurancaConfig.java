@@ -47,7 +47,11 @@ public class SegurancaConfig {
         http.securityMatcher(requisicao -> requisicao.getLocalPort() == portaAdmin)
             .authorizeHttpRequests(a -> a
                 .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
-                .requestMatchers("/admin/login", "/css/**", "/js/**", "/fontes/**").permitAll()
+                .requestMatchers("/admin/login", "/css/**", "/js/**", "/fontes/**", "/img/**").permitAll()
+                // O health sem detalhe serve para a verificação do contêiner,
+                // que não tem sessão. Os detalhes continuam exigindo login,
+                // por causa do show-details: when-authorized.
+                .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().hasRole("ADMIN"))
             .formLogin(f -> f
                 .loginPage("/admin/login")
