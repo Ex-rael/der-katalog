@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${produto.nome} + ' — ' + ${loja['loja_nome']}">Produto — Chima Club</title>
+  <meta name="description" th:content="${produto.nome}" content="Produto do catálogo Chima Club">
+  <link rel="stylesheet" th:href="@{/css/chimaclub.css}">
+  <link rel="icon" th:href="@{/img/selo-chimaclub.png}">
+</head>
+<body>
+
+<a class="pular-para-conteudo" href="#conteudo">Pular para o produto</a>
+
+<main class="produto-pagina" id="conteudo">
+
+  <a class="voltar" th:href="@{/}">← Voltar ao catálogo</a>
+
+  <div class="produto-corpo">
+
+    <div>
+      <figure class="destaque">
+        <div class="quadro">
+          <img th:if="${produto.principal() != null}"
+               id="foto-em-destaque"
+               th:src="@{/fotos/{arquivo}(arquivo=${produto.principal().arquivo})}"
+               th:alt="${produto.principal().textoAlt != null and !produto.principal().textoAlt.isBlank()}
+                       ? ${produto.principal().textoAlt} : ${produto.nome}"
+               width="1200" height="1500">
+          <div th:if="${produto.principal() == null}" class="sem-foto">sem foto</div>
+        </div>
+      </figure>
+
+      <!--/*
+        Carrossel. Sem JavaScript, é uma faixa rolável com as demais fotos,
+        cada uma abrindo em tamanho cheio pelo próprio link — degradação, não
+        quebra. Com JavaScript, os botões trocam a foto em destaque.
+      */-->
+      <div class="carrossel" th:if="${#lists.size(produto.fotos) > 1}">
+        <div class="faixa" role="group" aria-label="Outras fotos deste produto">
+          <button th:each="foto, iteracao : ${produto.fotos}"
+                  type="button"
+                  class="miniatura-do-carrossel"
+                  th:data-foto="@{/fotos/{arquivo}(arquivo=${foto.arquivo})}"
+                  th:aria-current="${foto.principal}"
+                  th:aria-label="'Ver foto ' + ${iteracao.count} + ' de ' + ${#lists.size(produto.fotos)}">
+            <img th:src="@{/fotos/{arquivo}(arquivo=${foto.arquivoMini})}"
+                 th:alt="${produto.nome} + ' — foto ' + ${iteracao.count}"
+                 loading="lazy" width="600" height="750">
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="produto-dados">
+      <h1 th:text="${produto.nome}">Nome do produto</h1>
+
+      <p class="preco" th:text="${@preco.formatar(produto.precoCentavos)}">R$ 0,00</p>
+
+      <p class="disponibilidade"
+         th:classappend="${produto.esgotado()} ? 'esgotado' : ''"
+         th:text="${produto.disponibilidade()}">3 unidades disponíveis</p>
+
+      <!--/* th:text escapa: a descrição é escrita no painel e pode conter
+             qualquer coisa. th:utext é proibido no projeto. */-->
+      <p class="descricao" th:if="${produto.descricao != null and !produto.descricao.isBlank()}"
+         th:text="${produto.descricao}">Descrição do produto.</p>
+
+      <form class="comprar-forma" method="post"
+            th:action="@{/produto/{slug}/whatsapp(slug=${produto.slug})}">
+        <button type="submit" class="comprar">Comprar pelo WhatsApp</button>
+      </form>
+
+      <p class="nota-de-encomenda" th:if="${produto.esgotado()}">
+        Esta peça está esgotada no momento, mas dá para encomendar. Chame no
+        WhatsApp que a gente avisa quando chegar.
+      </p>
+    </div>
+  </div>
+
+  <section class="relacionados" th:if="${!#lists.isEmpty(relacionados)}">
+    <h2>Outras peças <span th:text="${produto.categoriaNome}">da mesma categoria</span></h2>
+
+    <div class="produtos">
+      <article class="produto" th:each="outro : ${relacionados}">
+        <a th:href="@{/produto/{slug}(slug=${outro.slug})}">
+          <div class="foto">
+            <div class="quadro">
+              <img th:if="${outro.temFoto()}"
+                   th:src="@{/fotos/{arquivo}(arquivo=${outro.arquivoMini})}"
+                   th:alt="${outro.alternativoDaFoto()}"
+                   loading="lazy" width="600" height="750">
+              <div th:unless="${outro.temFoto()}" class="sem-foto">sem foto</div>
+            </div>
+            <p class="marca-esgotado" th:if="${outro.esgotado()}">Esgotado</p>
+          </div>
+          <h3 th:text="${outro.nome}">Nome</h3>
+          <p class="preco" th:text="${@preco.formatar(outro.precoCentavos)}">R$ 0,00</p>
+        </a>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <img class="selo" th:src="@{/img/selo-chimaclub.png}" alt="Selo Chima Club" width="150" height="150">
+  <p class="lema">Artefatos para o seu mate</p>
+
+  <a th:if="${loja['instagram']}"
+     th:href="'https://instagram.com/' + ${loja['instagram']}"
+     target="_blank" rel="noopener noreferrer"
+     th:text="'@' + ${loja['instagram']}">@chimaclub</a>
+
+  <a th:if="${loja['whatsapp_numero']}"
+     th:href="'https://wa.me/' + ${loja['whatsapp_numero']}"
+     target="_blank" rel="noopener noreferrer"
+     th:text="${loja['whatsapp_exibido']}">(51) 98925-0481</a>
+
+  <p class="miudo" th:text="${loja['loja_nome']}">Chima Club Artefatos</p>
+</footer>
+
+<script th:src="@{/js/carrossel.js}" defer></script>
+</body>
+</html>
