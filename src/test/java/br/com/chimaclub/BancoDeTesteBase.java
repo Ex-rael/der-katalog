@@ -32,6 +32,10 @@ public abstract class BancoDeTesteBase {
                     .withUsername("chimaclub")
                     .withPassword("senha-de-teste");
 
+    /** Diretório descartável para as fotos gravadas durante a suíte. */
+    protected static final String DIRETORIO_DE_FOTOS_DE_TESTE =
+            System.getProperty("java.io.tmpdir") + "/chimaclub-fotos-de-teste";
+
     static {
         BANCO.start();
     }
@@ -95,5 +99,8 @@ public abstract class BancoDeTesteBase {
         registro.add("spring.datasource.username", BANCO::getUsername);
         registro.add("spring.datasource.password", BANCO::getPassword);
         registro.add("app.porta-admin", () -> PORTA_ADMIN_DE_TESTE);
+        // Fora do projeto: sem isto a suíte deixa arquivos em ./fotos, que é
+        // o diretório de desenvolvimento, e eles se acumulam a cada execução.
+        registro.add("app.diretorio-fotos", () -> DIRETORIO_DE_FOTOS_DE_TESTE);
     }
 }

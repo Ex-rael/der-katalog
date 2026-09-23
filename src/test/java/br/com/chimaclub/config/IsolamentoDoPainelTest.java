@@ -3,6 +3,7 @@ package br.com.chimaclub.config;
 import br.com.chimaclub.BancoDeTesteBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -40,6 +41,16 @@ class IsolamentoDoPainelTest extends BancoDeTesteBase {
             .connectTimeout(Duration.ofSeconds(5))
             .followRedirects(HttpClient.Redirect.NEVER)
             .build();
+
+    private HttpResponse<String> cabecalhoDe(int porta, String caminho)
+            throws IOException, InterruptedException {
+        HttpRequest pedido = HttpRequest.newBuilder()
+                .uri(URI.create("http://127.0.0.1:" + porta + caminho))
+                .timeout(Duration.ofSeconds(10))
+                .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                .build();
+        return CLIENTE.send(pedido, HttpResponse.BodyHandlers.ofString());
+    }
 
     private HttpResponse<String> pega(int porta, String caminho) throws IOException, InterruptedException {
         HttpRequest pedido = HttpRequest.newBuilder()
@@ -140,6 +151,50 @@ class IsolamentoDoPainelTest extends BancoDeTesteBase {
     void fotosRespondemPelaPortaPublica() throws Exception {
         // 404 e não 403: a rota existe e está liberada; o arquivo é que não.
         assertThat(pega(portaPublica, "/fotos/inexistente.webp").statusCode()).isEqualTo(404);
+    }
+
+    @Test
+    @DisplayName("a foto servida traz cache eterno e tipo fixo")
+    void fotoTrazCacheEterno(@Autowired br.com.chimaclub.midia.ArmazenamentoFotos armazenamento)
+            throws Exception {
+        java.util.UUID base = java.util.UUID.randomUUID();
+        armazenamento.gravar(base, java.util.Map.of("mini", new byte[]{1, 2, 3, 4}), "webp");
+
+        HttpResponse<String> resposta = pega(portaPublica, "/fotos/" + base + "-mini.webp");
+
+        assertThat(resposta.statusCode()).isEqualTo(200);
+        assertThat(resposta.headers().firstValue("Cache-Control").orElse(""))
+                .as("o nome carrega um UUID novo a cada upload, então o conteúdo "
+                    + "de um nome nunca muda e o cache pode ser eterno")
+                .contains("max-age=31536000")
+                .contains("immutable");
+        assertThat(resposta.headers().firstValue("X-Content-Type-Options"))
+                .contains("nosniff");
+    }
+
+    @Test
+    @DisplayName("HEAD é aceito nas rotas públicas, como GET")
+    void aceitaHeadNasRotasPublicas(@Autowired br.com.chimaclub.midia.ArmazenamentoFotos armazenamento)
+            throws Exception {
+        java.util.UUID base = java.util.UUID.randomUUID();
+        armazenamento.gravar(base, java.util.Map.of("mini", new byte[]{1, 2, 3, 4}), "webp");
+
+        for (String rota : new String[]{"/saude", "/fotos/" + base + "-mini.webp"}) {
+            assertThat(cabecalhoDe(portaPublica, rota).statusCode())
+                    .as("navegador, proxy e cache consultam com HEAD antes de baixar; "
+                        + "negar faz o recurso parecer indisponível — rota %s", rota)
+                    .isEqualTo(200);
+        }
+    }
+
+    @Test
+    @DisplayName("HEAD no painel continua negado pela porta pública")
+    void headNaoAbreBrechaNoPainel() throws Exception {
+        for (String rota : new String[]{"/admin/produtos", "/admin/login", "/actuator/health"}) {
+            assertThat(cabecalhoDe(portaPublica, rota).statusCode())
+                    .as("liberar HEAD não pode virar porta dos fundos — rota %s", rota)
+                    .isIn(403, 404);
+        }
     }
 
     @Test

@@ -82,7 +82,13 @@ public class SegurancaConfig {
                 // Negação explícita antes de qualquer liberação: o painel e as
                 // métricas não existem para quem vem da internet.
                 .requestMatchers("/admin/**", "/actuator/**").denyAll()
+                // HEAD junto de GET: navegador, proxy e cache consultam com
+                // HEAD antes de baixar, e negar isso faz a imagem parecer
+                // indisponível para quem só está conferindo se mudou.
                 .requestMatchers(HttpMethod.GET, "/", "/saude", "/busca", "/produto/**",
+                                 "/fotos/**", "/css/**", "/js/**", "/fontes/**",
+                                 "/sitemap.xml", "/robots.txt").permitAll()
+                .requestMatchers(HttpMethod.HEAD, "/", "/saude", "/busca", "/produto/**",
                                  "/fotos/**", "/css/**", "/js/**", "/fontes/**",
                                  "/sitemap.xml", "/robots.txt").permitAll()
                 .requestMatchers(HttpMethod.POST, "/produto/*/whatsapp").permitAll()
