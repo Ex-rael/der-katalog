@@ -31,6 +31,8 @@
     <webp-imageio.version>0.1.6</webp-imageio.version>
     <bucket4j.version>8.14.0</bucket4j.version>
     <zxing.version>3.5.4</zxing.version>
+    <dependency-check.version>12.1.0</dependency-check.version>
+    <cyclonedx.version>2.9.1</cyclonedx.version>
   </properties>
 
   <dependencies>
@@ -187,4 +189,72 @@
       </plugin>
     </plugins>
   </build>
+
+  <!--
+    A varredura de segurança fica num perfil próprio, e não no build padrão.
+
+    O dependency-check baixa a base de vulnerabilidades e leva minutos. Preso
+    a todo "verify", ele tornaria o ciclo de desenvolvimento penoso a ponto
+    de alguém desligá-lo — e um controle desligado protege menos que um
+    controle que roda uma vez por mês e é lido.
+
+    O ciclo mensal do §A06 executa:  ./mvnw verify -Pseguranca
+  -->
+  <profiles>
+    <profile>
+      <id>seguranca</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.owasp</groupId>
+            <artifactId>dependency-check-maven</artifactId>
+            <version>${dependency-check.version}</version>
+            <configuration>
+              <!-- Falha em severidade 7 ou mais, como manda o §A06. -->
+              <failBuildOnCVSS>7</failBuildOnCVSS>
+              <formats>
+                <format>HTML</format>
+                <format>JSON</format>
+              </formats>
+              <outputDirectory>${project.build.directory}/seguranca</outputDirectory>
+              <!-- Analisadores de ecossistemas que este projeto não usa. -->
+              <nodeAnalyzerEnabled>false</nodeAnalyzerEnabled>
+              <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+              <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
+              <suppressionFiles>
+                <suppressionFile>docs/supressoes-dependency-check.xml</suppressionFile>
+              </suppressionFiles>
+            </configuration>
+            <executions>
+              <execution>
+                <goals><goal>check</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!--
+            Inventário de dependências (SBOM) a cada versão. Serve para
+            responder, no dia em que sair uma falha grave numa biblioteca,
+            à pergunta "isso está aqui dentro?" sem precisar adivinhar.
+          -->
+          <plugin>
+            <groupId>org.cyclonedx</groupId>
+            <artifactId>cyclonedx-maven-plugin</artifactId>
+            <version>${cyclonedx.version}</version>
+            <configuration>
+              <outputDirectory>${project.build.directory}/seguranca</outputDirectory>
+              <outputName>inventario-de-dependencias</outputName>
+              <includeTestScope>false</includeTestScope>
+            </configuration>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals><goal>makeAggregateBom</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

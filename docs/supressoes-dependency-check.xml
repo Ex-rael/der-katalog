@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Supressões do dependency-check.
+
+  Cada entrada precisa de justificativa escrita e de data. Uma supressão sem
+  motivo registrado vira permissão permanente para ignorar um aviso, e é
+  assim que uma falha conhecida fica anos num projeto.
+
+  Regra: suprimir apenas falso positivo comprovado, ou vulnerabilidade que
+  comprovadamente não alcança este sistema. Nunca "para o build passar".
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+  <!-- Nenhuma supressão até agora. -->
+</suppressions>

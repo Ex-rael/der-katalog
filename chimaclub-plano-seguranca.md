@@ -286,28 +286,73 @@ Se dado pessoal de cliente algum dia for armazenado e houver vazamento, a LGPD e
 
 ### 5.1 Antes de publicar (uma vez)
 
-Os itens marcados **[auto]** são cobertos por teste automatizado da suíte do projeto e rodam a cada construção; uma regressão quebra o build em vez de esperar a próxima revisão. Os demais existem fora do processo e continuam sendo conferência manual.
+Os itens marcados **[auto]** são cobertos por teste automatizado e rodam a
+cada construção: uma regressão quebra o build em vez de esperar a próxima
+revisão. Os marcados **[verificado]** foram conferidos à mão na máquina, com
+a saída registrada em `docs/verificacao-do-conteiner.md`. Os demais existem
+fora do processo e **dependem de você**.
 
-- [ ] **[auto]** Rota `/admin/**` e `/actuator/**` negadas na porta pública, mesmo com sessão válida
-- [ ] **[auto]** Actuator só na porta admin, com `env`, `heapdump` e `threaddump` desativados
-- [ ] **[auto]** Upload de `.php` renomeado para `.jpg`, de `.svg` com script e de imagem além de 8000 × 8000 rejeitados; imagem legítima reescrita e original descartado
-- [ ] **[auto]** Nome de arquivo fora do padrão e travessia de diretório (`../`) recusados pela rota de fotos
-- [ ] **[auto]** `<script>alert(1)</script>` no nome e na descrição, escapado na home e na página do produto
-- [ ] **[auto]** Limite de requisições disparando no login, no upload e nas rotas públicas
-- [ ] **[auto]** Bloqueio da conta após 5 falhas, e mensagem de erro idêntica para e-mail existente e inexistente
-- [ ] **[auto]** Alteração sem token CSRF recusada em toda rota administrativa
-- [ ] **[auto]** Cabeçalhos de segurança presentes em toda resposta, e CSP sem `unsafe-inline`
-- [ ] **[auto]** Erro 500 sem rastro de pilha, sem mensagem interna e sem versão do framework
-- [ ] **[auto]** Cookie de sessão com `Secure`, `HttpOnly` e `SameSite=Strict`, e sessão regenerada no login
-- [ ] `/admin` inacessível a partir de rede externa, testado com Tailscale desligado no celular
-- [ ] Postgres ligado a `127.0.0.1`, senha forte, usuário sem privilégio administrativo
-- [ ] Senha do admin gerada por gerenciador e TOTP ativado
-- [ ] Cabeçalhos conferidos também de fora, pelo nome público (`curl -I` e Mozilla Observatory)
-- [ ] Fontes hospedadas localmente, sem requisição ao Google
-- [ ] Backup executado e restaurado com sucesso ao menos uma vez
-- [ ] Disco da máquina cifrado
+Cada teste de segurança desta lista foi conferido por mutação: a proteção foi
+removida de propósito, o teste falhou, e só então foi restaurada. Um controle
+cujo teste passa por acaso é pior que a sua ausência, porque cria confiança
+falsa.
+
+**Provado por teste**
+
+- [x] **[auto]** `/admin/**` e `/actuator/**` negados na porta pública, rota por rota — `IsolamentoDoPainelTest`
+- [x] **[auto]** Conectores ligados só ao loopback, conferido por tentativa de conexão por endereço de rede — `EnderecoDeBindTest`
+- [x] **[auto]** Actuator sem `env`, `heapdump`, `threaddump`, `beans`, `configprops`, `loggers` e `shutdown` — `ActuatorEPaginaDeErroTest`
+- [x] **[auto]** `health` sem detalhe de banco ou disco para quem não está autenticado
+- [x] **[auto]** Upload de `.php` renomeado, de `.svg` com script e de imagem além de 8000 × 8000 rejeitados — `ValidadorUploadTest`
+- [x] **[auto]** Bomba de descompressão recusada em menos de um segundo, sem tentar alocar
+- [x] **[auto]** Imagem poliglota neutralizada pela reescrita — `ProcessadorImagemTest`
+- [x] **[auto]** Travessia de diretório recusada em oito formas, incluindo codificadas — `ArmazenamentoFotosTest`, `FotoControllerTest`
+- [x] **[auto]** `<script>alert(1)</script>` escapado no nome, na descrição e no termo de busca — `AdminProdutoControllerTest`, `HomeTest`, `PaginaDeProdutoTest`
+- [x] **[auto]** Aspas no termo de busca não escapam do atributo `value`
+- [x] **[auto]** Limite de requisições disparando no login, no upload e nas páginas — `LimiteDeRequisicoesTest`
+- [x] **[auto]** `X-Forwarded-For` forjado não dá balde novo ao mesmo visitante
+- [x] **[auto]** Bloqueio da conta após 5 falhas, e mensagem idêntica para e-mail inexistente e senha errada — `LoginTest`
+- [x] **[auto]** Senha nunca gravada na auditoria, nem quando digitada no campo de e-mail
+- [x] **[auto]** Sessão pela metade não alcança rota nenhuma do painel — `SegundoFatorTest`
+- [x] **[auto]** Segredo TOTP cifrado em repouso; texto adulterado recusado — `CifradorDeSegredoTest`
+- [x] **[auto]** TOTP correto contra os seis vetores do RFC 6238; código não serve duas vezes — `GeradorTotpTest`, `ServicoTotpTest`
+- [x] **[auto]** Alteração sem token CSRF recusada em toda rota administrativa
+- [x] **[auto]** Cabeçalhos de segurança em toda resposta das duas portas; CSP sem `unsafe-inline` e sem domínio externo — `CabecalhosDeSegurancaTest`
+- [x] **[auto]** As páginas funcionam sob a própria CSP: sem `<style>`, sem script inline, sem atributo `on*`
+- [x] **[auto]** Nenhuma resposta traz rastro de pilha, nome de classe, versão de framework ou comentário de HTML
+- [x] **[auto]** Redirecionamento do WhatsApp sempre para `wa.me`, imune a parâmetro da requisição — `PaginaDeProdutoTest`
+- [x] **[auto]** Clique registrado sem IP, cookie ou identificador de visitante
+- [x] **[auto]** Restauração conferida com índice de busca presente e busca respondendo — `scripts/testar-restauracao.sh`
+
+**Verificado à mão nesta máquina**
+
+- [x] **[verificado]** Contêiner roda como uid 10001, nunca root
+- [x] **[verificado]** Sistema de arquivos da imagem somente leitura
+- [x] **[verificado]** As três máscaras de capacidade do kernel zeradas
+- [x] **[verificado]** `/tmp` com `noexec`: arquivo de upload que aterrisse lá não executa
+- [x] **[verificado]** Portas 8080 e 8081 publicadas apenas em `127.0.0.1`
+- [x] **[verificado]** PostgreSQL publicado apenas em `127.0.0.1`
+- [x] **[verificado]** Cookie de sessão com `Secure`, `HttpOnly` e `SameSite=Strict` no perfil `prod`
+- [x] **[verificado]** HSTS enviado quando a requisição vem por HTTPS, e não no acesso local
+- [x] **[verificado]** Nativa de WebP carrega dentro do contêiner
+- [x] **[verificado]** Backup executado e restaurado com sucesso
+- [x] **[verificado]** Senha do administrador gerada por sorteio, impressa uma vez, nunca no log
+
+**Depende de você, antes de publicar**
+
+- [ ] `/admin` inacessível de rede externa, testado com o Tailscale **desligado** no celular, fora de casa
+- [ ] Cabeçalhos conferidos de fora, pelo nome público (`curl -I` e Mozilla Observatory)
+- [ ] Segundo fator ativado na conta da administradora, e o segredo guardado no gerenciador
+- [ ] Senha do banco trocada pela definitiva, gerada por gerenciador
+- [ ] Backup copiado para fora da máquina, cifrado — um backup no mesmo disco do banco não protege contra o disco falhar
+- [ ] Disco da máquina cifrado (LUKS)
 - [ ] Sem redirecionamento de porta no roteador; UPnP desligado
+- [ ] Wi-Fi e roteador com senha própria, trocada
+- [ ] Máquina em VLAN ou rede de convidados, separada dos dispositivos pessoais
+- [ ] SSH somente por chave, restrito à tailnet
+- [ ] UFW com política de negar entrada
 - [ ] `gitleaks` sem achados no repositório
+- [ ] `./mvnw verify -Pseguranca` sem vulnerabilidade de severidade 7 ou mais
 
 ### 5.2 Mensal
 
