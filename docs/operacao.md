@@ -87,12 +87,41 @@ chave é gratuita e sai em minutos:
 
 <https://nvd.nist.gov/developers/request-an-api-key>
 
-```bash
-./mvnw verify -Pseguranca -DnvdApiKey=SUA-CHAVE
+**Não passe a chave pela linha de comando.** O próprio plugin avisa
+(GHSA-qqhq-8r2c-c3f5) que `-DnvdApiKey=` a expõe no log de depuração do
+Maven, e log acaba em terminal, em histórico de shell e em saída de
+integração contínua.
+
+A chave mora em `~/.m2/settings.xml`, com permissão `600`, e o `pom.xml` a
+procura pelo id `nvd`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+  <servers>
+    <server>
+      <id>nvd</id>
+      <username>chimaclub</username>
+      <password>A-SUA-CHAVE-AQUI</password>
+    </server>
+  </servers>
+</settings>
 ```
 
-Ou, para não repetir a chave toda vez, ponha em `~/.m2/settings.xml` — e não
-no repositório, que é público para quem tiver acesso à máquina.
+O `<username>` é ignorado pelo plugin; o que vale é o `<password>`.
+
+Para cifrar a chave em vez de deixá-la em texto, dois comandos do Maven
+resolvem — `mvn` com a opção `encrypt-master-password`, uma vez, e depois
+com `encrypt-password`, que devolve o valor entre chaves para colar no lugar
+da chave. (Escritos assim, e não como opções longas, porque comentário de
+XML não aceita dois hifens seguidos — foi o que quebrou a primeira versão
+deste arquivo de configuração.)
+
+Depois é só:
+
+```bash
+./mvnw verify -Pseguranca
+```
 
 A base fica em `~/.m2/repository/org/owasp/dependency-check-data/` e é
 atualizada de forma incremental nas execuções seguintes, então só a primeira

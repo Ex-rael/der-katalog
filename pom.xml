@@ -212,6 +212,22 @@
             <configuration>
               <!-- Falha em severidade 7 ou mais, como manda o §A06. -->
               <failBuildOnCVSS>7</failBuildOnCVSS>
+
+              <!--
+                A chave da API do NVD vem do ~/.m2/settings.xml, pelo id
+                abaixo, e nunca da linha de comando.
+
+                O próprio plugin avisa que passá-la em -DnvdApiKey a expõe no
+                log de depuração do Maven (GHSA-qqhq-8r2c-c3f5), e o log
+                acaba em terminal, em histórico de shell e em saída de
+                integração contínua. Pelo settings.xml, a chave fica fora do
+                repositório e pode ainda ser cifrada com a senha mestra do
+                Maven.
+
+                Sem a chave, a varredura funciona — mas o NVD limita o
+                download a ponto de a primeira execução levar horas.
+              -->
+              <nvdApiServerId>nvd</nvdApiServerId>
               <formats>
                 <format>HTML</format>
                 <format>JSON</format>
