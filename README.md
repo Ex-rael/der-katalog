@@ -49,7 +49,21 @@ Nada de credencial versionada. A senha do banco fica em
 `secrets/senha_banco.txt`, com permissão `600`, ignorada pelo Git. O
 diretório `secrets/` inteiro está no `.gitignore` desde o primeiro commit.
 
-## Estado atual — Fases 1 a 4 concluídas
+## Estado atual — Fases 1 a 5, faltando publicar
+
+### Fase 5 — pronto para publicar
+
+- Os 17 produtos do catálogo antigo carregados pelo painel, com as fotos
+  reais reprocessadas em WebP (`scripts/carregar-catalogo-inicial.sh`)
+- `scripts/publicar.sh` — liga o Funnel, com recusas e confirmação por escrito
+- `scripts/verificar-exposicao.sh` — confere o que está exposto
+
+**A publicação em si ainda não foi feita.** Ligar o Funnel torna esta máquina
+alcançável pela internet, e o próprio plano pede que a lista 5.1 esteja
+cumprida antes — inclusive os itens que dependem de quem administra a
+máquina.
+
+### Fases 1 a 4
 
 ### Fase 4 — endurecimento
 
