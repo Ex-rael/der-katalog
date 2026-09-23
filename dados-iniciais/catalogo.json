@@ -1,0 +1,123 @@
+{
+  "produtos": [
+    {
+      "nome": "Cuia azul escuro em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "01-cuia-azul-escuro-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia vermelha em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "02-cuia-vermelha-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia caqui em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "03-cuia-caqui-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia azul perolada em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "04-cuia-azul-perolada-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia goiaba em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "05-cuia-goiaba-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Sunset em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "06-cuia-sunset-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Pink em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "07-cuia-pink-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Snow em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "08-cuia-snow-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Bronze em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "09-cuia-bronze-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Roxa com Brilho em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "10-cuia-roxa-com-brilho-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Vermelha com Brilho em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "11-cuia-vermelha-com-brilho-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Azul com Brilho em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "12-cuia-azul-com-brilho-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Gold em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "13-cuia-gold-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Prateada em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "14-cuia-prateada-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia Lilás com Brilho em madeira",
+      "preco": "89,90",
+      "categoria": "cuias-em-madeira",
+      "foto": "15-cuia-lil-s-com-brilho-em-madeira.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia em porongo com pérolas brancas",
+      "preco": "89,90",
+      "categoria": "cuias-em-porongo",
+      "foto": "16-cuia-em-porongo-com-p-rolas-brancas.jpg",
+      "unidades": 2
+    },
+    {
+      "nome": "Cuia em porongo com pérolas pretas e brilhos",
+      "preco": "89,90",
+      "categoria": "cuias-em-porongo",
+      "foto": "17-cuia-em-porongo-com-p-rolas-pretas-e-bri.jpg",
+      "unidades": 2
+    }
+  ]
+}

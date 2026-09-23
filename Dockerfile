@@ -43,7 +43,7 @@ WORKDIR /aplicacao
 COPY --from=construcao /construcao/target/*.jar aplicacao.jar
 
 # Os diretórios de escrita são volumes; a imagem em si fica somente leitura.
-RUN mkdir -p /var/chimaclub/fotos /var/log/chimaclub \
+RUN mkdir -p /var/chimaclub/fotos /var/chimaclub/tmp /var/log/chimaclub \
  && chown -R 10001:10001 /var/chimaclub /var/log/chimaclub
 
 USER 10001:10001
@@ -52,6 +52,10 @@ EXPOSE 8080 8081
 
 # A JVM respeita os limites do contêiner por padrão desde o Java 10; o
 # -XX:MaxRAMPercentage ajusta a fatia do que estiver disponível.
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/urandom"
+# java.io.tmpdir fora do /tmp: a nativa que grava WebP se extrai para cá e
+# precisa mapeá-la como executável, e o /tmp é montado com noexec porque é
+# onde os arquivos enviados aterrissam. Separar os dois caminhos preserva a
+# proteção e faz a nativa funcionar.
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/urandom -Djava.io.tmpdir=/var/chimaclub/tmp"
 
 ENTRYPOINT ["java", "-jar", "/aplicacao/aplicacao.jar"]

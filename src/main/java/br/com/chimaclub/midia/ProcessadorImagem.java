@@ -46,17 +46,42 @@ public class ProcessadorImagem {
     }
 
     /**
-     * WebP quando a nativa carrega; JPEG progressivo quando não. A garantia
-     * de segurança vem de reescrever a imagem, não do formato de saída, e é
-     * melhor servir JPEG que falhar o upload inteiro num ambiente onde a
-     * nativa não sobe.
+     * WebP quando a nativa funciona; JPEG progressivo quando não.
+     *
+     * A conferência é uma gravação de verdade, e não a simples presença do
+     * escritor no registro do ImageIO. A diferença não é acadêmica: num
+     * contêiner com /tmp montado como noexec — que é o nosso caso, de
+     * propósito, para que um arquivo de upload que aterrisse lá não possa
+     * ser executado — a nativa do WebP se registra normalmente e só falha
+     * na hora de mapear a biblioteca, já dentro da primeira gravação. O
+     * resultado era um upload que morria com erro interno em vez de recuar.
+     *
+     * A garantia de segurança vem de reescrever a imagem, não do formato de
+     * saída, então recuar para JPEG é perfeitamente aceitável.
      */
     private static String escolherFormatoDeSaida() {
-        if (ImageIO.getImageWritersByFormatName("webp").hasNext()) {
-            return "webp";
+        if (!ImageIO.getImageWritersByFormatName("webp").hasNext()) {
+            LOG.warn("escritor de WebP não registrado nesta JVM; as fotos serão gravadas em JPEG");
+            return "jpg";
         }
-        LOG.warn("escritor de WebP indisponível nesta JVM; as fotos serão gravadas em JPEG");
-        return "jpg";
+
+        try {
+            BufferedImage teste = new BufferedImage(8, 8, BufferedImage.TYPE_INT_RGB);
+            ByteArrayOutputStream saida = new ByteArrayOutputStream();
+            if (!ImageIO.write(teste, "webp", saida) || saida.size() == 0) {
+                throw new IOException("o escritor de WebP não produziu bytes");
+            }
+            LOG.info("escritor de WebP conferido na partida: as fotos serão gravadas em WebP");
+            return "webp";
+
+        } catch (IOException | RuntimeException | LinkageError falha) {
+            // LinkageError entra aqui de propósito: UnsatisfiedLinkError e
+            // NoClassDefFoundError não são Exception, e sem capturá-los a
+            // aplicação subiria achando que sabe gravar WebP.
+            LOG.warn("o escritor de WebP não funciona neste ambiente ({}); "
+                     + "as fotos serão gravadas em JPEG", falha.getMessage());
+            return "jpg";
+        }
     }
 
     public String formato() {
