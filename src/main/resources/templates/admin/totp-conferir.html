@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Código de acesso — Chima Club</title>
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="tela-de-entrada">
+
+<main class="cartao">
+  <h1>Código de acesso</h1>
+  <p class="subtitulo">Segunda etapa</p>
+
+  <!--/* Mensagem única, como na tela de senha: nada aqui pode dizer se o
+         problema foi o código, o relógio ou a conta. */-->
+  <p class="erro" th:if="${param.erro != null}" role="alert">
+    Código inválido.
+  </p>
+
+  <form method="post" th:action="@{/admin/totp/conferir}">
+    <label for="codigo">Código de seis dígitos do seu aplicativo</label>
+    <input type="text" id="codigo" name="codigo" inputmode="numeric" autocomplete="one-time-code"
+           pattern="[0-9]{6}" maxlength="6" required autofocus>
+    <button type="submit">Entrar</button>
+  </form>
+
+  <form method="post" th:action="@{/admin/logout}" class="formulario-de-envio">
+    <button type="submit" class="botao-secundario">Sair</button>
+  </form>
+</main>
+
+</body>
+</html>

@@ -30,6 +30,7 @@
     <thumbnailator.version>0.4.20</thumbnailator.version>
     <webp-imageio.version>0.1.6</webp-imageio.version>
     <bucket4j.version>8.14.0</bucket4j.version>
+    <zxing.version>3.5.4</zxing.version>
   </properties>
 
   <dependencies>
@@ -69,6 +70,17 @@
       <groupId>com.github.f4b6a3</groupId>
       <artifactId>uuid-creator</artifactId>
       <version>${uuid-creator.version}</version>
+    </dependency>
+
+    <!--
+      Código QR da ativação do segundo fator. Só o "core": a conversão do
+      BitMatrix em PNG é vinte linhas, e o módulo "javase" traria junto
+      leitura de imagem e linha de comando, que não usamos.
+    -->
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>core</artifactId>
+      <version>${zxing.version}</version>
     </dependency>
 
     <!--

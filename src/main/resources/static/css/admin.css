@@ -129,3 +129,13 @@ td.acoes button{margin:0 2px;padding:5px 12px;font-size:.82rem}
 .ajuda-de-topo{margin-bottom:24px}
 .detalhes-do-evento{font-size:.82rem;color:var(--salvia)}
 .paginacao{margin-top:24px;display:flex;gap:12px}
+
+/* ---------- Segundo fator ---------- */
+.cartao-largo{width:min(480px,100%)}
+.codigo-qr{margin:20px auto;border:1px solid var(--nevoa);padding:8px;background:var(--branco)}
+.segredo{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  font-size:1.05rem;letter-spacing:.08em;word-break:break-all;
+  background:var(--branco);border:1px solid var(--nevoa);padding:12px 14px;
+  text-align:center;
+}

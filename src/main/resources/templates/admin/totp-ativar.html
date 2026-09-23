@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ativar segundo fator — Chima Club</title>
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="tela-de-entrada">
+
+<main class="cartao cartao-largo">
+  <h1>Segundo fator</h1>
+  <p class="subtitulo">Mais uma tranca na porta do painel</p>
+
+  <p class="erro" th:if="${param.erro != null}" role="alert">
+    O código não confere. Verifique se o relógio do celular está certo e tente de novo.
+  </p>
+
+  <p class="ajuda">
+    Abra o seu aplicativo autenticador — Google Authenticator, Authy, 1Password,
+    o que você já usa — e leia este código:
+  </p>
+
+  <img class="codigo-qr" th:src="@{/admin/totp/qr.png}"
+       alt="Código para cadastrar o segundo fator no aplicativo autenticador"
+       width="320" height="320">
+
+  <p class="ajuda">
+    Se preferir digitar, o segredo é este:
+  </p>
+  <p class="segredo" th:text="${segredo}">SEGREDO</p>
+
+  <form method="post" th:action="@{/admin/totp/ativar}">
+    <label for="codigo">Agora digite o código de seis dígitos que o aplicativo mostra</label>
+    <input type="text" id="codigo" name="codigo" inputmode="numeric" autocomplete="one-time-code"
+           pattern="[0-9]{6}" maxlength="6" required autofocus>
+    <button type="submit">Ativar</button>
+  </form>
+
+  <p class="ajuda ajuda-de-topo">
+    Guarde o segredo junto da senha, no gerenciador. Se você perder o celular e
+    não tiver o segredo, a única saída é destravar a conta por linha de comando
+    na própria máquina.
+  </p>
+</main>
+
+</body>
+</html>
