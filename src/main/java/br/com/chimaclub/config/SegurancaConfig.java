@@ -86,10 +86,10 @@ public class SegurancaConfig {
                 // HEAD antes de baixar, e negar isso faz a imagem parecer
                 // indisponível para quem só está conferindo se mudou.
                 .requestMatchers(HttpMethod.GET, "/", "/saude", "/busca", "/produto/**",
-                                 "/fotos/**", "/css/**", "/js/**", "/fontes/**",
+                                 "/fotos/**", "/css/**", "/js/**", "/fontes/**", "/img/**",
                                  "/sitemap.xml", "/robots.txt").permitAll()
                 .requestMatchers(HttpMethod.HEAD, "/", "/saude", "/busca", "/produto/**",
-                                 "/fotos/**", "/css/**", "/js/**", "/fontes/**",
+                                 "/fotos/**", "/css/**", "/js/**", "/fontes/**", "/img/**",
                                  "/sitemap.xml", "/robots.txt").permitAll()
                 .requestMatchers(HttpMethod.POST, "/produto/*/whatsapp").permitAll()
                 // Política padrão: tudo o que não foi liberado acima é negado.
