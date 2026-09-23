@@ -154,6 +154,8 @@ SecurityFilterChain cadeiaPublica(HttpSecurity http) throws Exception {
 
 - O limite trata do abuso de origem única, que é o caso comum. Um ataque volumétrico vindo de muitos endereços não é absorvível nesta infraestrutura, e a §4.2 aceita a indisponibilidade temporária como resposta.
 - Bloqueio progressivo de conta: após 5 falhas, bloqueio de 15 minutos, registrado em auditoria.
+
+- **As duas defesas do login se sobrepõem, e é de propósito.** O limite por IP corta a sexta tentativa de um mesmo endereço antes mesmo de a senha ser conferida; o bloqueio da conta cobre quem varia o endereço. Como os dois limiares são cinco, para um atacante de origem única o limite dispara primeiro — e a resposta é 429, não a tela de erro. Um teste registra essa interação, para que ninguém a descubra achando que o bloqueio de conta parou de funcionar.
 - Limites de tamanho declarados: 10 MB por arquivo, 8 arquivos por requisição, 25 MB por requisição, 4000 caracteres na descrição.
 - Tempo limite de sessão: 30 minutos de inatividade, 8 horas de duração máxima.
 - Ausência de funcionalidade perigosa: sem recuperação de senha por e-mail (a troca é feita por linha de comando na máquina), sem cadastro público, sem upload por URL remota, o que elimina SSRF por completo.

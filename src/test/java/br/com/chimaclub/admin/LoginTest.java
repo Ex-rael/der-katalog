@@ -94,9 +94,34 @@ class LoginTest extends BancoDeTesteBase {
                 .as("cinco falhas precisam bloquear a conta")
                 .isTrue();
 
-        assertThat(destinoDoLogin(EMAIL, SENHA))
-                .as("com a conta bloqueada, nem a senha certa entra")
-                .isEqualTo("/admin/login?erro");
+        // Duas defesas com o mesmo limiar de cinco, e é de propósito que
+        // elas se sobreponham: o limite por IP (§A04) corta a sexta
+        // tentativa do mesmo endereço antes mesmo de a senha ser conferida,
+        // e o bloqueio da conta (§A07) cobre o caso de quem varia o IP. Para
+        // um atacante numa origem só, o limite dispara primeiro — o que
+        // significa que a resposta aqui é 429, e não o desvio para a tela de
+        // erro. O invariante que importa é o mesmo nos dois casos: não entra.
+        var sexta = navegador.enviarSemToken(LOGIN, "username", EMAIL, "password", SENHA);
+
+        assertThat(sexta.getResponse().getStatus())
+                .as("com a conta bloqueada e o limite estourado, nem a senha certa entra")
+                .isIn(429, 403);
+        assertThat(sexta.getResponse().getRedirectedUrl())
+                .as("em nenhuma hipótese o desfecho pode ser o painel")
+                .isNotEqualTo("/admin/produtos");
+    }
+
+    @Test
+    @DisplayName("o limite por IP corta a sexta tentativa antes de conferir a senha")
+    void limitePorIpCortaAntesDeConferirASenha() throws Exception {
+        for (int i = 0; i < 5; i++) {
+            tentarLogin(EMAIL, "senha errada");
+        }
+
+        assertThat(navegador.enviarSemToken(LOGIN, "username", EMAIL, "password", SENHA)
+                            .getResponse().getStatus())
+                .as("§A04: cinco por minuto na rota de login")
+                .isEqualTo(429);
     }
 
     @Test

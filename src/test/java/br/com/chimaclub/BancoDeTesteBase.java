@@ -55,6 +55,13 @@ public abstract class BancoDeTesteBase {
     private JdbcTemplate jdbcDaLimpeza;
 
     /**
+     * Opcional porque nem todo contexto de teste carrega a configuração de
+     * limite; quando carrega, os baldes são zerados junto com o banco.
+     */
+    @Autowired(required = false)
+    private br.com.chimaclub.config.LimiteDeRequisicoes limiteDeRequisicoes;
+
+    /**
      * Guarda o conteúdo semeado pela V2, colhido antes de qualquer teste
      * mexer nele. É o que permite restaurar em vez de truncar: a semeadura
      * é parte do estado inicial, e apagá-la quebraria os testes que contam
@@ -76,6 +83,14 @@ public abstract class BancoDeTesteBase {
      */
     @BeforeEach
     void limparDadosDeTeste() {
+        // O limite por IP guarda estado em memória, compartilhado pela suíte
+        // inteira. Sem zerar aqui, uma classe consumia o balde e a seguinte
+        // recebia 429 em vez do que estava medindo — e o teste falhava por
+        // um motivo que nada tem a ver com o que ele afirma.
+        if (limiteDeRequisicoes != null) {
+            limiteDeRequisicoes.limpar();
+        }
+
         jdbcDaLimpeza.execute("""
                 TRUNCATE TABLE clique_whatsapp, evento_auditoria, produto_foto, produto, usuario_admin
                 RESTART IDENTITY CASCADE
