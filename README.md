@@ -49,7 +49,33 @@ Nada de credencial versionada. A senha do banco fica em
 `secrets/senha_banco.txt`, com permissão `600`, ignorada pelo Git. O
 diretório `secrets/` inteiro está no `.gitignore` desde o primeiro commit.
 
-## Estado atual — Fase 1 concluída
+## Estado atual — Fases 1 e 2 concluídas
+
+### Fase 2 — painel administrativo
+
+- Login por formulário, com bloqueio de 15 minutos após 5 falhas e mensagem
+  de erro idêntica para todos os motivos
+- Segundo fator TOTP, implementado sobre o RFC 6238 e provado contra os
+  vetores do apêndice B do próprio RFC; segredo cifrado em AES-GCM
+- Cadastro, edição, publicação e exclusão lógica de produtos, com slug
+  estável e bloqueio otimista
+- Upload de fotos tratado como hostil: extensão, assinatura dos bytes,
+  limite de dimensão antes de descomprimir, reescrita em WebP e descarte do
+  original com todos os metadados
+- Configuração da loja com validação do número de WhatsApp
+- Auditoria de tudo que altera estado, com o valor anterior
+
+Para criar a primeira administradora:
+
+```bash
+./mvnw spring-boot:run \
+  -Dspring-boot.run.arguments="--criar-admin=voce@exemplo.com --nome=Seu Nome"
+```
+
+A senha é sorteada e impressa uma única vez. Não há recuperação por e-mail,
+e isso é deliberado.
+
+### Fase 1 — esqueleto
 
 Funciona, com teste automatizado cobrindo cada item:
 
@@ -66,12 +92,13 @@ Funciona, com teste automatizado cobrindo cada item:
   ou seja, o teste falha se a proteção for removida
 - `clean` do Flyway desativado, sem cabeçalho `Server`, `TRACE` recusado
 
-Ainda não existe:
+### Ainda não existe
 
-- Login por formulário, TOTP e bloqueio por tentativa (Fase 2)
-- CRUD de produtos, upload e processamento de fotos (Fase 2)
 - Catálogo público, busca na tela e identidade visual (Fase 3)
 - Cabeçalhos de segurança, CSP, limite de requisições e `Dockerfile` (Fase 4)
+- Rotina de limpeza das fotos de produto excluído após 30 dias (Fase 4)
+- Tela de ativação do TOTP e exigência do segundo fator em produção (Fase 4)
+- Publicação pelo Tailscale Funnel e carga dos 17 produtos (Fase 5)
 
 ## Notas para quem for mexer no código
 
