@@ -148,7 +148,11 @@ SecurityFilterChain cadeiaPublica(HttpSecurity http) throws Exception {
 ### A04 — Design inseguro
 
 - O painel fora da internet é decisão de arquitetura, não de configuração pontual.
-- Limite de requisições por IP com Bucket4j: 60 por minuto nas rotas públicas, 5 por minuto na rota de login, 10 por minuto no upload.
+- Limite de requisições por IP com Bucket4j, em quatro faixas: 5 por minuto no login, 10 no upload, 60 nas páginas e 300 nos recursos estáticos e nas fotos. A faixa larga dos recursos não é descuido: uma única visita à home pede o HTML, o CSS, cinco fontes, o HTMX e uma miniatura por produto — perto de trinta arquivos. Com todos na faixa das páginas, a segunda visita de um cliente legítimo já seria barrada, e a primeira impressão do catálogo seria um erro.
+
+- **De onde vem o IP, atrás do Funnel.** Quem abre a conexão é o processo do tailscaled, em `127.0.0.1`, e o endereço do visitante chega em `X-Forwarded-For`. As duas saídas simples estão erradas: confiar sempre no cabeçalho deixa qualquer visitante variá-lo a cada requisição e nunca cair no mesmo balde, e ignorá-lo sempre junta todo mundo num balde só, que um visitante abusivo esgota para todos. A regra adotada é confiar no cabeçalho apenas quando a conexão vem de um intermediário conhecido, e ler o valor **da direita** — o último acrescentado, que foi o nosso próprio intermediário que escreveu. Um valor forjado pelo cliente fica à esquerda desse e é descartado. Há teste para as três situações, e ele foi conferido por mutação.
+
+- O limite trata do abuso de origem única, que é o caso comum. Um ataque volumétrico vindo de muitos endereços não é absorvível nesta infraestrutura, e a §4.2 aceita a indisponibilidade temporária como resposta.
 - Bloqueio progressivo de conta: após 5 falhas, bloqueio de 15 minutos, registrado em auditoria.
 - Limites de tamanho declarados: 10 MB por arquivo, 8 arquivos por requisição, 25 MB por requisição, 4000 caracteres na descrição.
 - Tempo limite de sessão: 30 minutos de inatividade, 8 horas de duração máxima.

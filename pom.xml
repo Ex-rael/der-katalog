@@ -29,6 +29,7 @@
     <uuid-creator.version>6.1.1</uuid-creator.version>
     <thumbnailator.version>0.4.20</thumbnailator.version>
     <webp-imageio.version>0.1.6</webp-imageio.version>
+    <bucket4j.version>8.14.0</bucket4j.version>
   </properties>
 
   <dependencies>
@@ -68,6 +69,16 @@
       <groupId>com.github.f4b6a3</groupId>
       <artifactId>uuid-creator</artifactId>
       <version>${uuid-creator.version}</version>
+    </dependency>
+
+    <!--
+      Limite de requisições por IP (§A04). Em memória: há um processo só, e
+      a escala prevista é de centenas de visitas por dia.
+    -->
+    <dependency>
+      <groupId>com.bucket4j</groupId>
+      <artifactId>bucket4j_jdk17-core</artifactId>
+      <version>${bucket4j.version}</version>
     </dependency>
 
     <!--
