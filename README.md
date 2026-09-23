@@ -49,7 +49,25 @@ Nada de credencial versionada. A senha do banco fica em
 `secrets/senha_banco.txt`, com permissão `600`, ignorada pelo Git. O
 diretório `secrets/` inteiro está no `.gitignore` desde o primeiro commit.
 
-## Estado atual — Fases 1, 2 e 3 concluídas
+## Estado atual — Fases 1 a 4 concluídas
+
+### Fase 4 — endurecimento
+
+- Cabeçalhos de segurança e CSP em toda resposta das duas portas, sem
+  `unsafe-inline` e sem domínio externo
+- Limite de requisições por IP em quatro faixas, com resolução correta do
+  endereço atrás do Funnel
+- Segundo fator exigido em produção: a senha sozinha não abre o painel
+- Actuator restrito a `health` e `info`, só na porta administrativa
+- Contêiner sem privilégio: uid 10001, sistema de arquivos somente leitura,
+  zero capacidades do kernel, `/tmp` com `noexec`
+- Backup, restauração **testada** e limpeza das fotos de produto excluído
+- Varredura de dependências e inventário CycloneDX num perfil próprio
+
+Verificações à mão registradas em [`docs/verificacao-do-conteiner.md`](docs/verificacao-do-conteiner.md).
+Comandos do dia a dia em [`docs/operacao.md`](docs/operacao.md).
+
+### Fases 1, 2 e 3
 
 ### Fase 3 — catálogo público
 
@@ -108,10 +126,26 @@ Funciona, com teste automatizado cobrindo cada item:
 
 ### Ainda não existe
 
-- Cabeçalhos de segurança, CSP, limite de requisições e `Dockerfile` (Fase 4)
-- Rotina de limpeza das fotos de produto excluído após 30 dias (Fase 4)
-- Tela de ativação do TOTP e exigência do segundo fator em produção (Fase 4)
-- Publicação pelo Tailscale Funnel e carga dos 17 produtos (Fase 5)
+- Publicação pelo Tailscale Funnel e o teste de acesso externo (Fase 5)
+- Alerta automático por e-mail ou Telegram (§A09) — depende de escolher um
+  canal; a revisão mensal da auditoria é o que cobre isso por enquanto
+
+## Subir em produção
+
+```bash
+cp .env.example .env          # ajuste GRUPO_DOS_SEGREDOS com  id -g
+head -c 32 /dev/urandom | base64 | tr -d '\n=/+' > secrets/senha_banco.txt
+head -c 32 /dev/urandom | base64 > secrets/chave_totp.txt
+chmod 640 secrets/*.txt
+
+docker compose up -d --build
+
+docker compose run --rm --no-deps app \
+  java -jar /aplicacao/aplicacao.jar --criar-admin=voce@exemplo.com --nome="Seu Nome"
+```
+
+Antes de abrir o Funnel, percorra a lista 5.1 do plano de segurança — em
+especial os itens que dependem de você.
 
 ## Notas para quem for mexer no código
 

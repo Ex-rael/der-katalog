@@ -80,6 +80,24 @@ docker compose pull
 ./mvnw verify -Pseguranca
 ```
 
+**Peça uma chave de API do NVD antes da primeira execução.** Sem ela, o
+download da base de vulnerabilidades é fortemente limitado e a primeira
+varredura leva de trinta minutos a algumas horas; com ela, poucos minutos. A
+chave é gratuita e sai em minutos:
+
+<https://nvd.nist.gov/developers/request-an-api-key>
+
+```bash
+./mvnw verify -Pseguranca -DnvdApiKey=SUA-CHAVE
+```
+
+Ou, para não repetir a chave toda vez, ponha em `~/.m2/settings.xml` — e não
+no repositório, que é público para quem tiver acesso à máquina.
+
+A base fica em `~/.m2/repository/org/owasp/dependency-check-data/` e é
+atualizada de forma incremental nas execuções seguintes, então só a primeira
+é lenta.
+
 Falha se houver vulnerabilidade de severidade 7 ou mais. O relatório sai em
 `target/seguranca/`, e o inventário de dependências em
 `target/classes/META-INF/sbom/application.cdx.json` — é ele que responde, no
