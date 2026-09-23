@@ -44,6 +44,10 @@ server:
 
 app:
   porta-admin: 8081
+  # Chave de 32 bytes em base64, que cifra o segredo do segundo fator em
+  # repouso. Em produção vem de variável de ambiente e nunca do repositório;
+  # este valor de desenvolvimento não protege nada e não deve ir ao ar.
+  chave-totp: ${CHIMACLUB_CHAVE_TOTP:Y2hhdmUtZGUtZGVzZW52b2x2aW1lbnRvLTMyYnl0ZXM=}
   # Dentro do contêiner precisa ser 0.0.0.0: 127.0.0.1 ali é o loopback do
   # próprio contêiner, e a porta ficaria inalcançável pela publicação do
   # Docker. O perfil prod sobrescreve este valor.
