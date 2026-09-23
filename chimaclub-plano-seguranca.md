@@ -204,6 +204,10 @@ Se as fontes do Google forem usadas, `style-src` precisa incluir `https://fonts.
 - A aplicação acompanha uma linha *minor* do Spring Boot com suporte corrente — hoje a 3.5.x. Permanecer numa minor fora de suporte contraria este item mesmo que nenhuma vulnerabilidade tenha sido anunciada, porque a correção, quando vier, não virá para ela.
 - Regra prática: qualquer correção crítica de Spring, Postgres ou do sistema operacional é aplicada em até 7 dias; as demais, no ciclo mensal.
 
+- **A primeira varredura, em 2026-09-23, já achou coisa séria.** O Spring Boot 4.1.1 fixa o Tomcat 11.0.24, que tem nove vulnerabilidades conhecidas — quatro delas graves e diretamente aplicáveis a este sistema, entre elas o desvio de restrição de segurança quando uma regra de caminho mais longo precede uma mais restritiva de sub-caminho (CVE-2026-65182, 9.1) e o desvio de autorização no login por formulário (CVE-2026-68525, 9.1). O projeto passou a fixar o Tomcat 11.0.26 por conta própria, acima do que o Spring Boot traz. Essa linha do `pom.xml` sai quando o Spring Boot alcançar a versão corrigida.
+
+- Isso é o argumento de existir do §A06 em uma frase: uma dependência transitiva, que ninguém escolheu diretamente, trouxe quatro falhas graves no componente que atende a internet.
+
 ### A07 — Falhas de identificação e autenticação
 
 - Usuário único, com e-mail e senha longa gerada por gerenciador de senhas; mínimo de 12 caracteres, com verificação contra a lista de senhas mais comuns.
@@ -352,7 +356,7 @@ falsa.
 - [ ] SSH somente por chave, restrito à tailnet
 - [ ] UFW com política de negar entrada
 - [ ] `gitleaks` sem achados no repositório
-- [ ] `./mvnw verify -Pseguranca` sem vulnerabilidade de severidade 7 ou mais
+- [x] **[verificado]** `./mvnw verify -Pseguranca` sem vulnerabilidade de severidade 7 ou mais — varredura de 2026-09-23, 62 dependências, zero achados remanescentes
 
 ### 5.2 Mensal
 

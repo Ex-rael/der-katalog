@@ -26,6 +26,30 @@
   <properties>
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!--
+      Tomcat acima do que o Spring Boot 4.1.1 fixa (11.0.24).
+
+      A varredura de 2026-09-23 encontrou nove vulnerabilidades na 11.0.24,
+      quatro delas graves e diretamente aplicáveis a este sistema:
+
+        CVE-2026-65182 (9.1)  desvio de restrição de segurança quando uma
+                              regra de caminho mais longo vem antes de uma
+                              mais restritiva de sub-caminho — e as nossas
+                              cadeias fazem exatamente esse tipo de
+                              encadeamento para proteger /admin;
+        CVE-2026-68525 (9.1)  desvio de autorização no login por formulário,
+                              que é o do painel;
+        CVE-2026-65905 (9.8)  desvio de autenticação por repetição;
+        CVE-2026-65637 (9.8)  validação de entrada.
+
+      Todas corrigidas a partir da 11.0.25. O §A06 dá prazo de sete dias
+      para correção crítica; esta é de zero dia, porque o sistema ainda não
+      foi publicado.
+
+      Esta linha sai quando o Spring Boot passar a fixar 11.0.26 ou mais.
+    -->
+    <tomcat.version>11.0.26</tomcat.version>
+
     <uuid-creator.version>6.1.1</uuid-creator.version>
     <thumbnailator.version>0.4.20</thumbnailator.version>
     <webp-imageio.version>0.1.6</webp-imageio.version>

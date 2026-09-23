@@ -8,7 +8,63 @@
 
   Regra: suprimir apenas falso positivo comprovado, ou vulnerabilidade que
   comprovadamente não alcança este sistema. Nunca "para o build passar".
+
+  Na revisão trimestral, reler cada entrada e perguntar se ainda vale.
 -->
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-  <!-- Nenhuma supressão até agora. -->
+
+  <!--
+    angus-activation × CVE-2025-7962 — falso positivo por colisão de nome.
+
+    Registrado em 2026-09-23.
+
+    A CVE é do Jakarta Mail / Angus Mail, e descreve injeção de SMTP por
+    caracteres de quebra de linha ao montar uma mensagem de e-mail. O
+    artefato aqui é outro: angus-activation é a implementação da Jakarta
+    Activation, que resolve tipos MIME — ela não fala SMTP e não monta
+    mensagem nenhuma. O próprio scanner casou com confiança BAIXA, por
+    semelhança de nome entre "angus-activation" e "angus-mail".
+
+    Segunda razão, independente da primeira: este sistema não envia e-mail.
+    Não há servidor de SMTP configurado, e a ausência de recuperação de
+    senha por e-mail é decisão registrada no §A04 do plano de segurança.
+
+    Quando revisitar: se um dia entrar envio de e-mail no projeto, esta
+    supressão precisa ser reavaliada — não pela CVE em si, que continua sendo
+    de outro artefato, mas porque a dependência de mail passaria a existir.
+  -->
+  <suppress>
+    <notes><![CDATA[
+      angus-activation não é angus-mail; a CVE descreve injeção de SMTP e
+      este sistema não envia e-mail. Casamento de CPE com confiança baixa.
+    ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.eclipse\.angus/angus-activation@.*$</packageUrl>
+    <cve>CVE-2025-7962</cve>
+  </suppress>
+
+  <!--
+    hibernate-validator × CVE-2025-15104 — falso positivo por colisão de CPE.
+
+    Registrado em 2026-09-23.
+
+    A CVE é do Nu Html Checker (validator.nu), um serviço de validação de
+    HTML, e descreve requisição forçada a recursos internos. O artefato aqui
+    é o Hibernate Validator, a implementação da Jakarta Bean Validation, que
+    valida objetos em memória e não faz requisição a lugar nenhum. A colisão
+    vem do identificador genérico "validator:validator" no NVD.
+
+    A nota é 5.3, abaixo do limite de 7 que derruba o build, então esta
+    entrada não é o que faz a varredura passar — ela existe para que o
+    achado não volte a consumir tempo na revisão de todo mês.
+  -->
+  <suppress>
+    <notes><![CDATA[
+      Hibernate Validator não é o Nu Html Checker (validator.nu). Colisão do
+      CPE genérico validator:validator. O Hibernate Validator valida objetos
+      em memória e não faz requisição de saída.
+    ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.hibernate\.validator/hibernate-validator@.*$</packageUrl>
+    <cve>CVE-2025-15104</cve>
+  </suppress>
+
 </suppressions>
