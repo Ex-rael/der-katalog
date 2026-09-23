@@ -7,7 +7,12 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.Map;
 
 /**
  * Uma cadeia de segurança por porta, casada pela porta de chegada da
@@ -18,6 +23,18 @@ import org.springframework.security.web.SecurityFilterChain;
  */
 @Configuration
 public class SegurancaConfig {
+
+    /**
+     * BCrypt custo 12. O DelegatingPasswordEncoder grava o hash com o
+     * prefixo "{bcrypt}", o que permite migrar de algoritmo mais tarde sem
+     * invalidar as senhas já existentes: o prefixo diz como cada uma foi
+     * feita, e a verificação escolhe o codificador certo para cada hash.
+     */
+    @Bean
+    PasswordEncoder codificadorDeSenha() {
+        return new DelegatingPasswordEncoder("bcrypt",
+                Map.of("bcrypt", new BCryptPasswordEncoder(12)));
+    }
 
     @Bean
     @Order(1)
