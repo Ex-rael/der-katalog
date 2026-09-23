@@ -320,10 +320,13 @@ SELECT p.*, f.arquivo_mini
  WHERE p.excluido_em IS NULL
    AND p.publicado
    AND (
-         imutavel_unaccent(lower(p.nome)) LIKE '%' || imutavel_unaccent(lower(:termo)) || '%'
-      OR similarity(imutavel_unaccent(lower(p.nome)), imutavel_unaccent(lower(:termo))) > 0.25
+         imutavel_unaccent(lower(p.nome))
+           LIKE '%' || imutavel_unaccent(lower(:termoEscapado)) || '%' ESCAPE '\'
+      OR word_similarity(imutavel_unaccent(lower(:termo)),
+                         imutavel_unaccent(lower(p.nome))) > 0.45
    )
- ORDER BY similarity(imutavel_unaccent(lower(p.nome)), imutavel_unaccent(lower(:termo))) DESC,
+ ORDER BY word_similarity(imutavel_unaccent(lower(:termo)),
+                          imutavel_unaccent(lower(p.nome))) DESC,
           p.ordem, p.criado_em DESC
  LIMIT 60;
 ```
@@ -331,6 +334,12 @@ SELECT p.*, f.arquivo_mini
 O parâmetro `:termo` é sempre vinculado pelo JPA/JDBC, nunca concatenado na string da consulta.
 
 A consulta usa `imutavel_unaccent`, a mesma função do índice `idx_produto_busca_nome`. Escrever `unaccent(...)` aqui devolveria o mesmo resultado, mas com varredura sequencial. Um teste de integração confere o plano de execução para que essa divergência não passe despercebida.
+
+**Por que `word_similarity` e não `similarity`.** `similarity` compara as duas cadeias inteiras e divide pelos trigramas da união, de modo que um termo curto contra um nome longo afunda. Medido neste banco, `similarity('cuia sunset em madeira', 'sunsett')` dá **0,24** — logo abaixo do limite de 0,25 que a versão anterior deste documento propunha. Esse é o pior tipo de defeito: funcionaria nos nomes curtos e falharia em silêncio nos longos, que são justamente os do catálogo. `word_similarity` compara o termo com o melhor trecho do nome, e dá 0,75 no mesmo caso.
+
+O limite de **0,45** foi escolhido por medição. Com os nomes reais do catálogo, os acertos — inclusive com acento omitido e erro de digitação, como "madera" e "perola" — ficam entre 0,57 e 1,00, e os termos que não deveriam casar, como "erva" e "bomba", ficam abaixo de 0,20. O vão entre os dois grupos é largo, e 0,45 fica no meio dele.
+
+Dois parâmetros, e não um: `:termoEscapado` tem os curingas do `LIKE` (`%`, `_`, `\`) neutralizados, e `:termo` é o texto cru, porque a comparação por trigrama não interpreta curinga. Sem escapar, uma busca por `%` devolveria o catálogo inteiro, e um produto chamado "100%" nunca seria encontrado.
 
 ### 3.5 Armazenamento das fotos
 
