@@ -80,13 +80,13 @@ Dentro do contêiner, os dois conectores escutam em `0.0.0.0`. Quem restringe o 
 | Camada | Escolha | Motivo |
 |---|---|---|
 | Linguagem | Java 21 (LTS) | Exigência do projeto; LTS com suporte longo |
-| Framework | Spring Boot 3.5.x | Padrão de mercado, Spring Security integrado; linha *minor* com suporte corrente, como exige o §A06 do plano de segurança |
+| Framework | Spring Boot 4.1.x | Padrão de mercado, Spring Security integrado; linha *minor* com suporte OSS corrente, como exige o §A06 do plano de segurança. A 3.3.x perdeu o suporte em 2025-06-30 e a 3.5.x em 2026-06-30 |
 | Web | Spring MVC + Thymeleaf | Renderização no servidor; dispensa build de frontend e uma segunda aplicação |
 | Interatividade | HTMX + JavaScript mínimo | Busca e carrossel sem framework de SPA |
-| Persistência | Spring Data JPA (Hibernate 6) | Mapeamento direto do modelo |
+| Persistência | Spring Data JPA (Hibernate 7) | Mapeamento direto do modelo |
 | Migrações | Flyway | Versionamento do banco em SQL, revisável |
 | Banco | PostgreSQL 16 | Exigência do projeto |
-| Segurança | Spring Security 6 | Sessão, CSRF, cabeçalhos, BCrypt |
+| Segurança | Spring Security 7 | Sessão, CSRF, cabeçalhos, BCrypt |
 | Imagens | Thumbnailator + webp-imageio | Reprocessamento e miniaturas. O `ImageIO` do Java lê WebP mas não grava; o escritor vem de biblioteca nativa |
 | Identificadores | uuid-creator | UUID v7 gerado na aplicação; o PostgreSQL oferece apenas v4 |
 | Build | Maven | Ecossistema Spring |
@@ -134,7 +134,7 @@ br.com.chimaclub
 - **Preço em centavos (`BIGINT`), nunca em ponto flutuante.** `preco_centavos = 8990` representa R$ 89,90. Evita erro de arredondamento e mantém aritmética exata.
 - **Chaves primárias UUID v7** (ordenadas no tempo). Não revelam quantidade de produtos cadastrados, como um `id` sequencial revelaria, e mantêm boa localidade em índice.
 - **Exclusão lógica.** Produto tem `excluido_em`; nada some do banco, o que permite desfazer erros e manter o histórico de auditoria coerente.
-- **Busca com `pg_trgm` + `unaccent`.** "cuia gold", "Cuía Gold" e "gold" chegam ao mesmo produto.
+- **Busca com `pg_trgm` + `unaccent`.** "cuia gold", "Cuía Gold" e "gold" chegam ao mesmo produto, e "sunsett" chega a "Cuia Sunset" — ver a §3.4 para a escolha de `word_similarity` e do limite.
 - **`versao` para bloqueio otimista.** Impede que duas abas do painel sobrescrevam uma à outra em silêncio.
 
 ### 3.3 DDL

@@ -1,0 +1,89 @@
+package br.com.chimaclub.catalogo.web;
+
+import br.com.chimaclub.catalogo.dto.ProdutoDetalhe;
+import br.com.chimaclub.catalogo.dto.ProdutoResumo;
+import br.com.chimaclub.catalogo.service.CatalogoService;
+import br.com.chimaclub.config_loja.ConfiguracaoService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+
+/**
+ * O catálogo que o cliente vê. Responde pela porta 8080, a única publicada
+ * pelo Funnel, e nada aqui depende de sessão.
+ */
+@Controller
+public class CatalogoController {
+
+    private static final int RELACIONADOS_NA_PAGINA = 3;
+
+    private final CatalogoService catalogo;
+    private final ConfiguracaoService configuracao;
+
+    public CatalogoController(CatalogoService catalogo, ConfiguracaoService configuracao) {
+        this.catalogo = catalogo;
+        this.configuracao = configuracao;
+    }
+
+    @GetMapping("/")
+    public String home(@RequestParam(required = false) String q, Model modelo) {
+        preencherGrade(modelo, q);
+        preencherLoja(modelo);
+        return "publico/home";
+    }
+
+    /**
+     * A mesma grade, servida de dois jeitos.
+     *
+     * Com HTMX, o navegador pede só este fragmento e troca o bloco da
+     * listagem sem recarregar. Sem JavaScript, o formulário faz um GET comum
+     * para "/" com ?q=, e a página inteira volta já filtrada. Os dois
+     * caminhos usam o mesmo fragmento, então não existe markup duplicado
+     * para divergir com o tempo.
+     */
+    @GetMapping("/busca")
+    public String busca(@RequestParam(required = false) String q,
+                        @RequestHeader(value = "HX-Request", required = false) String htmx,
+                        Model modelo) {
+        preencherGrade(modelo, q);
+        if (htmx == null) {
+            preencherLoja(modelo);
+            return "publico/home";
+        }
+        return "publico/fragmentos/grade :: grade";
+    }
+
+    @GetMapping("/produto/{slug}")
+    public String produto(@PathVariable String slug, Model modelo) {
+        ProdutoDetalhe detalhe = catalogo.detalhe(slug)
+                // 404 e não uma página de "produto indisponível": um produto
+                // despublicado não deve confirmar que existe.
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND));
+
+        modelo.addAttribute("produto", detalhe);
+        modelo.addAttribute("relacionados", catalogo.relacionados(detalhe, RELACIONADOS_NA_PAGINA));
+        preencherLoja(modelo);
+        return "publico/produto";
+    }
+
+    private void preencherGrade(Model modelo, String termo) {
+        List<ProdutoResumo> encontrados = catalogo.buscar(termo);
+
+        modelo.addAttribute("q", termo);
+        modelo.addAttribute("buscando", termo != null && !termo.isBlank());
+        modelo.addAttribute("total", encontrados.size());
+        modelo.addAttribute("grupos", catalogo.agrupadosPorCategoria(encontrados));
+    }
+
+    private void preencherLoja(Model modelo) {
+        modelo.addAttribute("loja", configuracao.todas());
+    }
+}

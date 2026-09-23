@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${loja['loja_nome']} + ' — Catálogo'">Chima Club Artefatos — Catálogo</title>
+  <meta name="description"
+        th:content="${loja['loja_lema']}"
+        content="Cuias, bombas e acessórios selecionados para quem ama um chima.">
+  <link rel="stylesheet" th:href="@{/css/chimaclub.css}">
+  <link rel="icon" th:href="@{/img/selo-chimaclub.png}">
+</head>
+<body>
+
+<a class="pular-para-conteudo" href="#catalogo">Pular para o catálogo</a>
+
+<header class="abertura">
+  <img class="logo" th:src="@{/img/logo-chimaclub.png}"
+       th:alt="${loja['loja_nome']}" width="640" height="571">
+
+  <div class="divisor">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><use href="/img/sois.svg#sol"/></svg>
+  </div>
+
+  <p class="lema" th:text="${loja['loja_lema']}">Seu tempo de qualidade merece artefatos à altura</p>
+  <p class="sublema">Cuias, bombas e acessórios <em>selecionados</em> para quem ama um chima.</p>
+</header>
+
+<section class="busca">
+  <!--/*
+    O formulário faz um GET comum para "/", então funciona com JavaScript
+    desligado. Os atributos hx-* fazem o HTMX interceptar e trocar apenas o
+    bloco da grade; sem HTMX carregado, eles são atributos inertes e o
+    navegador segue com o envio normal.
+  */-->
+  <form method="get" th:action="@{/}" role="search"
+        hx-get="/busca" hx-target="#grade" hx-swap="outerHTML"
+        hx-trigger="submit, keyup changed delay:350ms from:find input[type=search]"
+        hx-push-url="true">
+    <label for="q" class="pular-para-conteudo">Buscar produto pelo nome</label>
+    <input type="search" id="q" name="q" th:value="${q}"
+           placeholder="Buscar por nome, como “cuia gold”"
+           autocomplete="off" maxlength="80">
+    <button type="submit">Buscar</button>
+  </form>
+</section>
+
+<main id="catalogo">
+  <div th:replace="~{publico/fragmentos/grade :: grade}"></div>
+</main>
+
+<p class="aviso">
+  Preços e disponibilidade confirmados no WhatsApp.
+</p>
+
+<footer class="rodape">
+  <img class="selo" th:src="@{/img/selo-chimaclub.png}" alt="Selo Chima Club" width="150" height="150">
+  <p class="lema">Artefatos para o seu mate</p>
+
+  <a th:if="${loja['instagram']}"
+     th:href="'https://instagram.com/' + ${loja['instagram']}"
+     target="_blank" rel="noopener noreferrer"
+     th:text="'@' + ${loja['instagram']}">@chimaclub</a>
+
+  <a th:if="${loja['whatsapp_numero']}"
+     th:href="'https://wa.me/' + ${loja['whatsapp_numero']}"
+     target="_blank" rel="noopener noreferrer"
+     th:text="${loja['whatsapp_exibido']}">(51) 98925-0481</a>
+
+  <p class="miudo" th:text="${loja['loja_nome']}">Chima Club Artefatos</p>
+</footer>
+
+<script th:src="@{/js/htmx.min.js}" defer></script>
+</body>
+</html>

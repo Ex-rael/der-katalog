@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--/*
+  A grade, servida de dois jeitos a partir deste mesmo fragmento: inteira
+  dentro da home, ou sozinha quando o HTMX pede só ela. Um markup só, para
+  não haver duas versões divergindo com o tempo.
+*/-->
+<div th:fragment="grade" id="grade">
+
+  <p class="resultado-da-busca" th:if="${buscando}">
+    <span th:if="${total > 0}">
+      <span th:text="${total}">0</span>
+      <span th:text="${total == 1} ? 'produto encontrado para' : 'produtos encontrados para'">produtos para</span>
+      <!--/* th:text escapa: o termo vem do cliente e volta para a tela. */-->
+      “<span th:text="${q}">termo</span>”
+    </span>
+    <a class="limpar-busca" th:href="@{/}">ver o catálogo inteiro</a>
+  </p>
+
+  <p class="vazio" th:if="${#maps.isEmpty(grupos)}">
+    <span th:if="${buscando}">Nada encontrado para “<span th:text="${q}">termo</span>”.</span>
+    <span th:unless="${buscando}">O catálogo está sendo preparado. Volte logo.</span>
+  </p>
+
+  <th:block th:each="grupo : ${grupos}">
+
+    <section class="categoria">
+      <div class="moldura">
+        <svg class="sol-meio" viewBox="0 0 200 84" aria-hidden="true"><use href="/img/sois.svg#sol-meio"/></svg>
+        <h2 th:text="${grupo.key}">Cuias em madeira</h2>
+        <p class="qtd">
+          <span th:text="${#lists.size(grupo.value)}">0</span>
+          <span th:text="${#lists.size(grupo.value) == 1} ? 'peça' : 'peças'">peças</span>
+        </p>
+      </div>
+    </section>
+
+    <div class="produtos">
+      <article class="produto" th:each="produto : ${grupo.value}">
+        <a th:href="@{/produto/{slug}(slug=${produto.slug})}">
+
+          <div class="foto">
+            <div class="quadro">
+              <img th:if="${produto.temFoto()}"
+                   th:src="@{/fotos/{arquivo}(arquivo=${produto.arquivoMini})}"
+                   th:alt="${produto.alternativoDaFoto()}"
+                   loading="lazy" width="600" height="750">
+              <div th:unless="${produto.temFoto()}" class="sem-foto">sem foto</div>
+            </div>
+            <!--/* Esgotado marca, mas não esconde nem desabilita: §6.4. */-->
+            <p class="marca-esgotado" th:if="${produto.esgotado()}">Esgotado</p>
+          </div>
+
+          <h3 th:text="${produto.nome}">Nome do produto</h3>
+          <p class="preco" th:text="${@preco.formatar(produto.precoCentavos)}">R$ 0,00</p>
+          <p class="ultima-unidade" th:if="${produto.ultimaUnidade()}">Última unidade</p>
+        </a>
+      </article>
+    </div>
+
+  </th:block>
+</div>
+
+</body>
+</html>
