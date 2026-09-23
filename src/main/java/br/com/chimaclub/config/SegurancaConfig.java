@@ -1,5 +1,6 @@
 package br.com.chimaclub.config;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +44,7 @@ public class SegurancaConfig {
                                     @Value("${app.porta-admin:8081}") int portaAdmin) throws Exception {
         http.securityMatcher(requisicao -> requisicao.getLocalPort() == portaAdmin)
             .authorizeHttpRequests(a -> a
+                .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                 .requestMatchers("/admin/login", "/css/**", "/js/**", "/fontes/**").permitAll()
                 .anyRequest().hasRole("ADMIN"))
             .formLogin(f -> f
@@ -72,6 +74,11 @@ public class SegurancaConfig {
     @Order(2)
     SecurityFilterChain cadeiaPublica(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(a -> a
+                // O despacho interno de erro precisa passar, senão toda
+                // falha vira 403 em vez do status real: um 404 do catálogo
+                // sairia como "proibido", o que confunde quem consome a
+                // página e esconde o desfecho verdadeiro.
+                .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                 // Negação explícita antes de qualquer liberação: o painel e as
                 // métricas não existem para quem vem da internet.
                 .requestMatchers("/admin/**", "/actuator/**").denyAll()

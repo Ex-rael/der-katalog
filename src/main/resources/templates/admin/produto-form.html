@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${novo} ? 'Cadastrar produto — Chima Club' : 'Editar produto — Chima Club'">Produto</title>
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<header class="barra">
+  <span class="marca">Chima Club</span>
+  <nav>
+    <a th:href="@{/admin/produtos}">Produtos</a>
+    <a th:href="@{/admin/configuracao}">Configuração</a>
+    <a th:href="@{/admin/auditoria}">Auditoria</a>
+  </nav>
+  <form method="post" th:action="@{/admin/logout}">
+    <button type="submit">Sair</button>
+  </form>
+</header>
+
+<main>
+  <div class="cabecalho-da-pagina">
+    <h1 th:text="${novo} ? 'Cadastrar produto' : 'Editar produto'">Produto</h1>
+    <a class="botao botao-secundario" th:href="@{/admin/produtos}">Voltar</a>
+  </div>
+
+  <p class="aviso" th:if="${aviso}" th:text="${aviso}"></p>
+  <p class="erro" th:if="${erro}" th:text="${erro}"></p>
+  <p class="erro" th:each="falha : ${#fields.globalErrors()}" th:text="${falha}"></p>
+
+  <form class="formulario" method="post"
+        th:object="${form}"
+        th:action="${novo} ? @{/admin/produtos/novo} : @{/admin/produtos/{id}(id=${produto.id})}">
+
+    <!--/* Bloqueio otimista: o serviço compara com a versão do banco e
+           recusa a gravação se outra aba tiver salvado no meio-tempo. */-->
+    <input type="hidden" th:field="*{versao}">
+
+    <label for="nome">Nome</label>
+    <input type="text" id="nome" th:field="*{nome}" maxlength="140" required>
+    <p class="erro" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></p>
+
+    <div class="linha">
+      <div>
+        <label for="precoEmReais">Preço</label>
+        <input type="text" id="precoEmReais" th:field="*{precoEmReais}" placeholder="89,90" required>
+        <p class="ajuda">Use vírgula para os centavos, como em 89,90.</p>
+        <p class="erro" th:if="${#fields.hasErrors('precoEmReais')}" th:errors="*{precoEmReais}"></p>
+      </div>
+      <div>
+        <label for="unidades">Unidades disponíveis</label>
+        <input type="number" id="unidades" th:field="*{unidades}" min="0" step="1">
+        <p class="ajuda">Zero mostra "Esgotado", mas o produto continua no catálogo.</p>
+      </div>
+    </div>
+
+    <div class="linha">
+      <div>
+        <label for="categoriaId">Categoria</label>
+        <select id="categoriaId" th:field="*{categoriaId}">
+          <option value="">Sem categoria</option>
+          <option th:each="categoria : ${categorias}"
+                  th:value="${categoria.id}"
+                  th:text="${categoria.nome}">Cuias em madeira</option>
+        </select>
+      </div>
+      <div>
+        <label for="ordem">Ordem de exibição</label>
+        <input type="number" id="ordem" th:field="*{ordem}" step="1">
+        <p class="ajuda">Menor aparece primeiro.</p>
+      </div>
+    </div>
+
+    <label for="descricao">Descrição</label>
+    <textarea id="descricao" th:field="*{descricao}" maxlength="4000"></textarea>
+    <p class="erro" th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}"></p>
+
+    <div class="caixa-de-marcar">
+      <input type="checkbox" id="publicado" th:field="*{publicado}">
+      <label for="publicado">Publicado no catálogo</label>
+    </div>
+    <p class="ajuda">Para publicar, o produto precisa de preço maior que zero e ao menos uma foto.</p>
+
+    <div class="caixa-de-marcar">
+      <input type="checkbox" id="destaque" th:field="*{destaque}">
+      <label for="destaque">Destacar na home</label>
+    </div>
+
+    <button type="submit" th:text="${novo} ? 'Cadastrar' : 'Gravar alterações'">Gravar</button>
+  </form>
+
+  <section th:unless="${novo}">
+    <h2 style="font-family:var(--f-display);font-weight:400;margin-top:40px">Fotos</h2>
+
+    <form class="formulario" method="post" enctype="multipart/form-data"
+          th:action="@{/admin/produtos/{id}/fotos(id=${produto.id})}" style="margin-top:14px">
+      <label for="arquivos">Enviar fotos</label>
+      <input type="file" id="arquivos" name="arquivos" multiple accept=".jpg,.jpeg,.png,.webp">
+      <p class="ajuda">JPG, PNG ou WebP, até 10 MB cada e 8 por vez. A imagem é reprocessada pelo sistema.</p>
+      <button type="submit">Enviar</button>
+    </form>
+
+    <p class="vazio" th:if="${#lists.isEmpty(fotos)}">Nenhuma foto ainda.</p>
+
+    <div class="galeria" th:unless="${#lists.isEmpty(fotos)}">
+      <figure th:each="foto : ${fotos}" th:classappend="${foto.principal} ? 'eh-principal' : ''">
+        <img th:src="@{/fotos/{arquivo}(arquivo=${foto.arquivoMini})}"
+             th:alt="${foto.textoAlt != null} ? ${foto.textoAlt} : ${produto.nome}">
+        <figcaption>
+          <span th:if="${foto.principal}" class="marca-situacao publicado">Principal</span>
+
+          <form th:unless="${foto.principal}" method="post"
+                th:action="@{/admin/produtos/{id}/fotos/{fotoId}/principal(id=${produto.id},fotoId=${foto.id})}">
+            <button type="submit" class="botao-secundario">Tornar principal</button>
+          </form>
+
+          <form method="post"
+                th:action="@{/admin/produtos/{id}/fotos/{fotoId}/excluir(id=${produto.id},fotoId=${foto.id})}">
+            <button type="submit" class="botao-perigo">Excluir</button>
+          </form>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

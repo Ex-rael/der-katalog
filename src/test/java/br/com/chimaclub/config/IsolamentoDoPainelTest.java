@@ -108,6 +108,41 @@ class IsolamentoDoPainelTest extends BancoDeTesteBase {
     }
 
     @Test
+    @DisplayName("NENHUMA rota do painel é alcançável pela porta pública")
+    void nenhumaRotaDoPainelVazaPelaPortaPublica() throws Exception {
+        // Uma asserção por rota criada no painel. Uma rota nova que esqueça
+        // de entrar nesta lista continua protegida pelo denyAll da cadeia
+        // pública; esta lista existe para que a proteção seja verificada, e
+        // não apenas presumida.
+        String[] rotasDoPainel = {
+                "/admin", "/admin/", "/admin/login", "/admin/logout",
+                "/admin/painel", "/admin/produtos", "/admin/produtos/novo",
+                "/admin/configuracao", "/admin/auditoria",
+                "/actuator", "/actuator/health", "/actuator/env", "/actuator/heapdump"
+        };
+
+        for (String rota : rotasDoPainel) {
+            HttpResponse<String> resposta = pega(portaPublica, rota);
+
+            assertThat(resposta.statusCode())
+                    .as("rota %s pela porta pública", rota)
+                    .isIn(403, 404);
+            assertThat(resposta.body())
+                    .as("corpo da resposta a %s", rota)
+                    .doesNotContainIgnoringCase("senha")
+                    .doesNotContainIgnoringCase("password")
+                    .doesNotContainIgnoringCase("chima club");
+        }
+    }
+
+    @Test
+    @DisplayName("a rota de fotos responde pela porta pública, porque o catálogo precisa dela")
+    void fotosRespondemPelaPortaPublica() throws Exception {
+        // 404 e não 403: a rota existe e está liberada; o arquivo é que não.
+        assertThat(pega(portaPublica, "/fotos/inexistente.webp").statusCode()).isEqualTo(404);
+    }
+
+    @Test
     @DisplayName("rota pública desconhecida é negada, não explorada")
     void rotaDesconhecidaEhNegada() throws Exception {
         HttpResponse<String> resposta = pega(portaPublica, "/qualquer-coisa-inexistente");

@@ -1,0 +1,123 @@
+/* =========================================================
+   Painel Chima Club — mesma paleta do catálogo público
+   ========================================================= */
+:root{
+  --creme:     #E9E0D0;
+  --salvia:    #6D9571;
+  --verde:     #0D3316;
+  --nevoa:     #A7B3A2;
+  --terracota: #84431D;
+  --branco:    #FFFFFF;
+  --erro:      #9B2C2C;
+
+  --f-display: "Marcellus", Georgia, serif;
+  --f-texto:   "Jost", "Century Gothic", system-ui, sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--creme);color:var(--verde);
+  font-family:var(--f-texto);font-weight:300;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:inherit}
+
+/* ---------- Entrada ---------- */
+.tela-de-entrada{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--verde);padding:24px;
+}
+.cartao{
+  background:var(--creme);padding:clamp(32px,6vw,56px);
+  width:min(420px,100%);border:1px solid var(--nevoa);
+}
+.cartao h1{font-family:var(--f-display);font-weight:400;font-size:2rem}
+.subtitulo{color:var(--salvia);margin-bottom:32px}
+
+label{display:block;margin-top:18px;margin-bottom:6px;font-size:.9rem}
+input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{
+  width:100%;padding:11px 13px;border:1px solid var(--nevoa);
+  background:var(--branco);color:var(--verde);font:inherit;
+}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{
+  outline:2px solid var(--salvia);outline-offset:2px;
+}
+textarea{min-height:140px;resize:vertical}
+
+button,.botao{
+  display:inline-block;margin-top:24px;padding:11px 26px;
+  background:var(--verde);color:var(--creme);border:1px solid var(--verde);
+  font:inherit;cursor:pointer;text-decoration:none;
+}
+button:hover,.botao:hover{background:var(--salvia);border-color:var(--salvia)}
+.botao-secundario{background:transparent;color:var(--verde)}
+.botao-secundario:hover{background:var(--verde);color:var(--creme)}
+.botao-perigo{background:transparent;color:var(--erro);border-color:var(--erro)}
+.botao-perigo:hover{background:var(--erro);color:var(--creme)}
+
+.erro{
+  background:#F6E6E6;border-left:3px solid var(--erro);color:var(--erro);
+  padding:12px 14px;margin-bottom:8px;font-size:.92rem;
+}
+.aviso{
+  background:#E4EFE5;border-left:3px solid var(--salvia);
+  padding:12px 14px;margin-bottom:8px;font-size:.92rem;
+}
+
+/* ---------- Painel ---------- */
+.barra{
+  background:var(--verde);color:var(--creme);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px clamp(16px,4vw,40px);
+}
+.barra .marca{font-family:var(--f-display);font-size:1.2rem;letter-spacing:.06em}
+.barra nav{display:flex;gap:22px}
+.barra nav a{text-decoration:none;font-size:.95rem}
+.barra nav a:hover{color:var(--nevoa)}
+.barra form{margin:0}
+.barra button{margin:0;padding:6px 16px;font-size:.9rem;background:transparent;border-color:var(--creme);color:var(--creme)}
+
+main{max-width:1080px;margin:0 auto;padding:clamp(24px,4vw,48px) clamp(16px,4vw,24px)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(1.6rem,4vw,2.2rem);margin-bottom:6px}
+.cabecalho-da-pagina{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.cabecalho-da-pagina .botao{margin-top:0}
+
+.filtros{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:24px}
+.filtros label{margin-top:0}
+.filtros input,.filtros select{width:auto;min-width:200px}
+.filtros button{margin-top:0}
+
+table{width:100%;border-collapse:collapse;background:var(--branco);border:1px solid var(--nevoa)}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--nevoa);vertical-align:middle}
+th{font-weight:500;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;color:var(--salvia)}
+tr:last-child td{border-bottom:none}
+td.acoes{white-space:nowrap}
+td.acoes form{display:inline;margin:0}
+td.acoes button{margin:0 2px;padding:5px 12px;font-size:.82rem}
+
+.miniatura{width:56px;height:70px;object-fit:cover;border:1px solid var(--verde)}
+.sem-foto{width:56px;height:70px;background:var(--nevoa);display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--verde)}
+.preco{color:var(--terracota);font-weight:500;white-space:nowrap}
+.marca-situacao{font-size:.8rem;padding:3px 10px;border:1px solid currentColor;white-space:nowrap}
+.publicado{color:var(--salvia)}
+.rascunho{color:var(--terracota)}
+.esgotado{color:var(--erro)}
+
+.vazio{text-align:center;padding:64px 24px;color:var(--salvia)}
+
+/* ---------- Formulário ---------- */
+.formulario{background:var(--branco);border:1px solid var(--nevoa);padding:clamp(20px,4vw,36px);max-width:720px}
+.linha{display:flex;gap:18px;flex-wrap:wrap}
+.linha > div{flex:1;min-width:180px}
+.caixa-de-marcar{display:flex;align-items:center;gap:9px;margin-top:20px}
+.caixa-de-marcar input{width:auto}
+.caixa-de-marcar label{margin:0}
+.ajuda{font-size:.82rem;color:var(--salvia);margin-top:5px}
+
+.galeria{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-top:18px}
+.galeria figure{border:1px solid var(--nevoa);padding:8px;background:var(--branco)}
+.galeria img{aspect-ratio:4/5;object-fit:cover;width:100%}
+.galeria figcaption{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.galeria button{margin:0;padding:4px 10px;font-size:.78rem}
+.eh-principal{outline:2px solid var(--salvia);outline-offset:2px}
