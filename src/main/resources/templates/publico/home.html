@@ -12,6 +12,8 @@
 </head>
 <body>
 
+<div th:replace="~{publico/fragmentos/sois :: sois}"></div>
+
 <a class="pular-para-conteudo" href="#catalogo">Pular para o catálogo</a>
 
 <header class="abertura">
@@ -19,7 +21,7 @@
        th:alt="${loja['loja_nome']}" width="640" height="571">
 
   <div class="divisor">
-    <svg viewBox="0 0 100 100" aria-hidden="true"><use href="/img/sois.svg#sol"/></svg>
+    <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#sol"/></svg>
   </div>
 
   <p class="lema" th:text="${loja['loja_lema']}">Seu tempo de qualidade merece artefatos à altura</p>

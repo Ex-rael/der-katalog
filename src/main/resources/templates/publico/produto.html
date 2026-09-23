@@ -10,6 +10,8 @@
 </head>
 <body>
 
+<div th:replace="~{publico/fragmentos/sois :: sois}"></div>
+
 <a class="pular-para-conteudo" href="#conteudo">Pular para o produto</a>
 
 <main class="produto-pagina" id="conteudo">
@@ -79,7 +81,7 @@
   </div>
 
   <section class="relacionados" th:if="${!#lists.isEmpty(relacionados)}">
-    <h2>Outras peças <span th:text="${produto.categoriaNome}">da mesma categoria</span></h2>
+    <h2>Mais em <span th:text="${produto.categoriaNome}">Cuias em madeira</span></h2>
 
     <div class="produtos">
       <article class="produto" th:each="outro : ${relacionados}">

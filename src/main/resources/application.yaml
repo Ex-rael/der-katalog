@@ -1,6 +1,10 @@
 spring:
   application:
     name: chimaclub
+  config:
+    import:
+      - optional:configtree:/run/secrets/
+      - optional:configtree:secrets/
   servlet:
     multipart:
       # 10 MB por arquivo e 25 MB por requisição (§A04). O Tomcat recusa

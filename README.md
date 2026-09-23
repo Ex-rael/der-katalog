@@ -49,7 +49,21 @@ Nada de credencial versionada. A senha do banco fica em
 `secrets/senha_banco.txt`, com permissão `600`, ignorada pelo Git. O
 diretório `secrets/` inteiro está no `.gitignore` desde o primeiro commit.
 
-## Estado atual — Fases 1 e 2 concluídas
+## Estado atual — Fases 1, 2 e 3 concluídas
+
+### Fase 3 — catálogo público
+
+- Home com a identidade Chima Club: logo, lema em Pinyon Script, molduras de
+  categoria e a grade de produtos do catálogo original
+- Busca por nome que funciona dos dois jeitos — HTMX troca só a grade; sem
+  JavaScript, o formulário faz um GET comum e a página volta filtrada
+- Página de produto com foto em destaque, carrossel, disponibilidade nas três
+  formas da §4.2 e botão do WhatsApp
+- `sitemap.xml` gerado e `robots.txt` com `Crawl-delay`
+- Fontes, HTMX e imagens servidos localmente: nada é pedido a domínio externo
+
+Os 17 produtos do catálogo antigo foram carregados pelo painel e conferidos
+no navegador.
 
 ### Fase 2 — painel administrativo
 
@@ -94,7 +108,6 @@ Funciona, com teste automatizado cobrindo cada item:
 
 ### Ainda não existe
 
-- Catálogo público, busca na tela e identidade visual (Fase 3)
 - Cabeçalhos de segurança, CSP, limite de requisições e `Dockerfile` (Fase 4)
 - Rotina de limpeza das fotos de produto excluído após 30 dias (Fase 4)
 - Tela de ativação do TOTP e exigência do segundo fator em produção (Fase 4)
