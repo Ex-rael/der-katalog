@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar — Chima Club</title>
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="tela-de-entrada">
+
+<main class="cartao">
+  <h1>Chima Club</h1>
+  <p class="subtitulo">Painel da loja</p>
+
+  <!--/*
+    Comentário de Thymeleaf: some na renderização, ao contrário do comentário
+    de HTML, que seria entregue ao navegador. Explicar o desenho de segurança
+    no código-fonte da página é presente para quem estiver sondando.
+
+    Mensagem única, escrita aqui e não vinda do servidor: e-mail inexistente,
+    senha errada, conta bloqueada e conta inativa produzem exatamente esta
+    frase. Diferenciá-las entregaria quais e-mails existem.
+  */-->
+  <p class="erro" th:if="${param.erro != null}" role="alert">
+    E-mail ou senha inválidos.
+  </p>
+
+  <form method="post" th:action="@{/admin/login}">
+    <label for="username">E-mail</label>
+    <input type="email" id="username" name="username" required autocomplete="username" autofocus>
+
+    <label for="password">Senha</label>
+    <input type="password" id="password" name="password" required autocomplete="current-password">
+
+    <button type="submit">Entrar</button>
+  </form>
+</main>
+
+</body>
+</html>

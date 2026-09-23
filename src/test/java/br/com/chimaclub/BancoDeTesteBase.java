@@ -1,6 +1,9 @@
 package br.com.chimaclub;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -39,7 +42,28 @@ public abstract class BancoDeTesteBase {
      * classpath de teste encobre o de produção por inteiro, e a suíte
      * passaria a exercitar uma configuração que não é a que vai ao ar.
      */
-    static final int PORTA_ADMIN_DE_TESTE = 18081;
+    protected static final int PORTA_ADMIN_DE_TESTE = 18081;
+
+    @Autowired
+    private JdbcTemplate jdbcDaLimpeza;
+
+    /**
+     * Cada teste começa da mesma base: esquema migrado, dados da V2
+     * semeados, e nada mais. O contêiner é um só para a suíte inteira, por
+     * velocidade, e sem esta limpeza uma classe enxergaria as linhas que a
+     * anterior deixou — e passaria ou falharia conforme a ordem de execução,
+     * que ninguém controla.
+     *
+     * As tabelas semeadas pela V2 (categoria, configuracao) ficam de fora de
+     * propósito: elas são parte do estado inicial, não resíduo de teste.
+     */
+    @BeforeEach
+    void limparDadosDeTeste() {
+        jdbcDaLimpeza.execute("""
+                TRUNCATE TABLE clique_whatsapp, evento_auditoria, produto_foto, produto, usuario_admin
+                RESTART IDENTITY CASCADE
+                """);
+    }
 
     @DynamicPropertySource
     static void propriedades(DynamicPropertyRegistry registro) {

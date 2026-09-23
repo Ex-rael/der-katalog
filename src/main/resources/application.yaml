@@ -29,6 +29,18 @@ server:
     include-message: never
     whitelabel:
       enabled: false
+  servlet:
+    session:
+      # 30 minutos de inatividade (§A04). A duração máxima de 8 horas é
+      # imposta separadamente, porque o Tomcat só conhece inatividade.
+      timeout: 30m
+      cookie:
+        name: CHIMASESSION
+        http-only: true
+        same-site: strict
+        # Fica true no perfil prod. Em dev o painel responde em http local,
+        # e um cookie Secure simplesmente não seria enviado.
+        secure: false
 
 app:
   porta-admin: 8081

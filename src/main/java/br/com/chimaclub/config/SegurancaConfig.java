@@ -39,16 +39,31 @@ public class SegurancaConfig {
     @Bean
     @Order(1)
     SecurityFilterChain cadeiaAdmin(HttpSecurity http,
+                                    ManipuladorDeLogin manipulador,
                                     @Value("${app.porta-admin:8081}") int portaAdmin) throws Exception {
         http.securityMatcher(requisicao -> requisicao.getLocalPort() == portaAdmin)
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/admin/login", "/css/**", "/js/**").permitAll()
+                .requestMatchers("/admin/login", "/css/**", "/js/**", "/fontes/**").permitAll()
                 .anyRequest().hasRole("ADMIN"))
-            // Provisório: o login por formulário, o TOTP e o bloqueio por
-            // tentativa entram na Fase 2. Aqui basta exigir autenticação,
-            // para o teste de isolamento distinguir "não existe" de
-            // "existe e exige credencial".
-            .httpBasic(Customizer.withDefaults())
+            .formLogin(f -> f
+                .loginPage("/admin/login")
+                .loginProcessingUrl("/admin/login")
+                .failureHandler(manipulador)
+                .successHandler(manipulador)
+                .permitAll())
+            .logout(l -> l
+                .logoutUrl("/admin/logout")
+                .logoutSuccessUrl("/admin/login?saiu")
+                .invalidateHttpSession(true)
+                .deleteCookies("CHIMASESSION"))
+            .sessionManagement(s -> s
+                // Sessão nova a cada login: sem isto, um identificador de
+                // sessão obtido antes da autenticação continuaria válido
+                // depois dela (fixação de sessão).
+                .sessionFixation(f -> f.newSession())
+                .maximumSessions(2))
+            // Sem "lembrar de mim" e sem token de longa duração (§A07).
+            .rememberMe(rm -> rm.disable())
             .csrf(Customizer.withDefaults());
         return http.build();
     }
