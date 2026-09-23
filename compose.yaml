@@ -21,9 +21,72 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      banco: { condition: service_healthy }
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://banco:5432/chimaclub
+      SPRING_DATASOURCE_USERNAME: chimaclub
+      # A senha nunca aparece em variável de ambiente, onde vazaria por
+      # "docker inspect" e por /proc/<pid>/environ. O "config tree" do
+      # Spring Boot lê /run/secrets/spring.datasource.password como se fosse
+      # a propriedade de mesmo nome, e o valor só existe no arquivo montado.
+      SPRING_CONFIG_IMPORT: "optional:configtree:/run/secrets/"
+      # Idem para a chave que cifra o segredo do segundo fator.
+      CHIMACLUB_CHAVE_TOTP_FILE: /run/secrets/app.chave-totp
+    secrets:
+      - source: senha_banco
+        target: spring.datasource.password
+      - source: chave_totp
+        target: app.chave-totp
+    volumes:
+      - fotos:/var/chimaclub/fotos
+      - registros:/var/log/chimaclub
+    ports:
+      - "127.0.0.1:8080:8080"   # público, entregue pelo Funnel
+      - "127.0.0.1:8081:8081"   # admin, entregue só na tailnet
+
+    # ---------- Contenção (§1.2 e §A05) ----------
+    # Se a aplicação for comprometida, o estrago precisa parar nela.
+    user: "10001:10001"                  # nunca root
+
+    # O Compose fora do modo swarm monta o arquivo de segredo com a posse
+    # que ele tem no host, ignorando uid/gid/mode — o que deixa a aplicação
+    # sem conseguir ler o próprio segredo.
+    #
+    # Das saídas possíveis, esta é a que não afrouxa nada: o processo
+    # continua com uid 10001, e ganha como grupo SUPLEMENTAR o grupo dono
+    # dos arquivos de segredo no host. Eles passam de 600 para 640 — ainda
+    # sem leitura para o resto do mundo — e só esse grupo os alcança.
+    #
+    # GRUPO_DOS_SEGREDOS vem do .env; o padrão 1000 é o primeiro usuário da
+    # maioria das instalações Linux.
+    group_add:
+      - "${GRUPO_DOS_SEGREDOS:-1000}"
+    read_only: true                      # a imagem não é gravável
+    cap_drop: [ALL]                      # nenhuma capacidade do kernel
+    security_opt: ["no-new-privileges:true"]   # nem por binário com setuid
+    tmpfs:
+      # O Tomcat grava os temporários de upload aqui. noexec e nosuid porque
+      # é justamente onde um arquivo enviado poderia aterrissar.
+      - /tmp:mode=1777,size=64m,noexec,nosuid,nodev
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8081/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
 volumes:
   dados_pg:
+  fotos:
+  registros:
 
 secrets:
   senha_banco:
     file: ./secrets/senha_banco.txt
+  chave_totp:
+    file: ./secrets/chave_totp.txt

@@ -14,6 +14,45 @@ app:
   diretorio-fotos: /var/chimaclub/fotos
 
 server:
+  # ---------------------------------------------------------------
+  # Atrás do Funnel, quem termina o TLS é o Tailscale, e a requisição chega
+  # à aplicação como http comum. Sem esta linha, duas coisas quebram em
+  # silêncio:
+  #
+  #   o HSTS nunca é enviado, porque o Spring Security só o manda em
+  #   requisição que considera segura — o controle do §A02 existiria no
+  #   código e não no ar;
+  #
+  #   o sitemap.xml anuncia aos buscadores "http://127.0.0.1:8080/" como
+  #   endereço canônico do catálogo.
+  #
+  # NATIVE e não FRAMEWORK de propósito. O ForwardedHeaderFilter do Spring
+  # lê o PRIMEIRO valor de X-Forwarded-For, que é justamente o que o cliente
+  # pode forjar. A válvula do Tomcat percorre a lista da direita para a
+  # esquerda descartando os intermediários conhecidos, que é o comportamento
+  # correto — e o mesmo que o IpDeOrigem aplica para o limite por IP.
+  # ---------------------------------------------------------------
+  forward-headers-strategy: NATIVE
+  tomcat:
+    remoteip:
+      # Faixas privadas, e não só o loopback.
+      #
+      # Dentro do contêiner, a conexão do tailscaled NÃO chega de 127.0.0.1:
+      # ela atravessa a publicação de porta do Docker e aparece vindo do
+      # gateway da rede do contêiner, hoje 172.18.0.1. Restringir ao
+      # loopback fazia a válvula ignorar os cabeçalhos em silêncio — que foi
+      # exatamente o que aconteceu na primeira tentativa.
+      #
+      # Confiar nas faixas privadas aqui é aceitável porque o limite de rede
+      # não é feito por esta lista: a porta é publicada apenas no loopback
+      # do host, então nada que venha de fora da máquina alcança este
+      # conector sem passar pelo tailscaled.
+      internal-proxies: "10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|192\\.168\\.\\d{1,3}\\.\\d{1,3}|169\\.254\\.\\d{1,3}\\.\\d{1,3}|127\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|172\\.1[6-9]\\.\\d{1,3}\\.\\d{1,3}|172\\.2[0-9]\\.\\d{1,3}\\.\\d{1,3}|172\\.3[0-1]\\.\\d{1,3}\\.\\d{1,3}|0:0:0:0:0:0:0:1|::1"
+      protocol-header: X-Forwarded-Proto
+      remote-ip-header: X-Forwarded-For
+      # Sem isto, o sitemap anuncia aos buscadores o endereço interno em vez
+      # do nome público, e o link que vai na mensagem do WhatsApp também.
+      host-header: X-Forwarded-Host
   servlet:
     session:
       cookie:

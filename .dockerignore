@@ -1,0 +1,15 @@
+# Nada que não seja necessário para construir entra no contexto: menos
+# coisa enviada ao daemon, e nenhum risco de um segredo entrar na imagem
+# por descuido de um COPY amplo.
+.git
+.gitignore
+target
+secrets
+backups
+fotos
+docs
+styles
+*.md
+.mise.toml
+.idea
+.vscode

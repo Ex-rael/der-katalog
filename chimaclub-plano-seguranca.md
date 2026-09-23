@@ -131,6 +131,10 @@ SecurityFilterChain cadeiaPublica(HttpSecurity http) throws Exception {
 
 - TLS 1.2+ com certificado gerenciado pelo Tailscale, renovado automaticamente; HTTP não é servido.
 - HSTS com `max-age=31536000; includeSubDomains`, ligado só depois de confirmar que o domínio funciona em HTTPS.
+
+- **O HSTS depende de a aplicação saber que a requisição era HTTPS.** Quem termina o TLS é o Tailscale, e a requisição chega ao contêiner como http comum. Sem `server.forward-headers-strategy: NATIVE`, o Spring Security não considera a requisição segura e **simplesmente não envia o cabeçalho** — o controle existiria no código e não no ar. O mesmo ajuste conserta um segundo problema achado na mesma verificação: sem ele, o `sitemap.xml` anunciava aos buscadores `http://127.0.0.1:8080/` como endereço canônico do catálogo, e o link da mensagem do WhatsApp apontava para o mesmo lugar.
+
+- `NATIVE` e não `FRAMEWORK`: o `ForwardedHeaderFilter` do Spring lê o **primeiro** valor de `X-Forwarded-For`, que é justamente o que o cliente pode forjar; a válvula do Tomcat percorre a lista da direita para a esquerda descartando os intermediários conhecidos. A lista de intermediários precisa incluir as faixas privadas, e não só o loopback: dentro do contêiner, a conexão atravessa a publicação de porta do Docker e chega pelo gateway da rede, não por `127.0.0.1`. Restringir ao loopback faz a válvula ignorar os cabeçalhos em silêncio. Isso é aceitável porque o limite de rede não é feito por essa lista — a porta é publicada apenas no loopback do host.
 - Senhas com BCrypt custo 12 (`DelegatingPasswordEncoder`, com prefixo que permite migrar de algoritmo depois).
 - Segredo TOTP cifrado em repouso com AES-GCM, e a chave vem de variável de ambiente, nunca do repositório.
 - Cookie de sessão com `Secure`, `HttpOnly` e `SameSite=Strict`; nome trocado para `CHIMASESSION`.
