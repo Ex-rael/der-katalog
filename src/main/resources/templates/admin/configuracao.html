@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configuração — Chima Club</title>
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<header class="barra">
+  <span class="marca">Chima Club</span>
+  <nav>
+    <a th:href="@{/admin/produtos}">Produtos</a>
+    <a th:href="@{/admin/configuracao}">Configuração</a>
+    <a th:href="@{/admin/auditoria}">Auditoria</a>
+  </nav>
+  <form method="post" th:action="@{/admin/logout}">
+    <button type="submit">Sair</button>
+  </form>
+</header>
+
+<main>
+  <h1>Configuração da loja</h1>
+
+  <p class="aviso" th:if="${aviso}" th:text="${aviso}"></p>
+  <p class="erro" th:if="${erro}" th:text="${erro}"></p>
+
+  <form class="formulario" method="post" th:action="@{/admin/configuracao}">
+    <label for="whatsapp_numero">Número de WhatsApp</label>
+    <input type="text" id="whatsapp_numero" name="whatsapp_numero"
+           th:value="${valores['whatsapp_numero']}" inputmode="numeric">
+    <p class="ajuda">
+      Só dígitos, com código do país, como em 5551989250481. É este número
+      que recebe as conversas do catálogo — confira antes de gravar.
+    </p>
+
+    <label for="whatsapp_exibido">Número como aparece na tela</label>
+    <input type="text" id="whatsapp_exibido" name="whatsapp_exibido"
+           th:value="${valores['whatsapp_exibido']}">
+
+    <label for="whatsapp_mensagem">Mensagem padrão</label>
+    <textarea id="whatsapp_mensagem" name="whatsapp_mensagem" maxlength="300"
+              th:text="${valores['whatsapp_mensagem']}"></textarea>
+    <p class="ajuda">Use {produto} onde o nome do produto deve entrar.</p>
+
+    <label for="instagram">Instagram</label>
+    <input type="text" id="instagram" name="instagram" th:value="${valores['instagram']}">
+    <p class="ajuda">Só o perfil, sem arroba e sem endereço completo.</p>
+
+    <div class="linha">
+      <div>
+        <label for="loja_nome">Nome da loja</label>
+        <input type="text" id="loja_nome" name="loja_nome" th:value="${valores['loja_nome']}">
+      </div>
+      <div>
+        <label for="loja_lema">Lema</label>
+        <input type="text" id="loja_lema" name="loja_lema" th:value="${valores['loja_lema']}">
+      </div>
+    </div>
+
+    <button type="submit">Gravar</button>
+  </form>
+</main>
+
+</body>
+</html>

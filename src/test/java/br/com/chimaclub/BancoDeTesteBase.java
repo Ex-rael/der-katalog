@@ -4,6 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -48,14 +51,24 @@ public abstract class BancoDeTesteBase {
     private JdbcTemplate jdbcDaLimpeza;
 
     /**
+     * Guarda o conteúdo semeado pela V2, colhido antes de qualquer teste
+     * mexer nele. É o que permite restaurar em vez de truncar: a semeadura
+     * é parte do estado inicial, e apagá-la quebraria os testes que contam
+     * com ela.
+     */
+    private static Map<String, String> configuracaoSemeada;
+
+    /**
      * Cada teste começa da mesma base: esquema migrado, dados da V2
      * semeados, e nada mais. O contêiner é um só para a suíte inteira, por
      * velocidade, e sem esta limpeza uma classe enxergaria as linhas que a
-     * anterior deixou — e passaria ou falharia conforme a ordem de execução,
-     * que ninguém controla.
+     * anterior deixou — e passaria ou falharia conforme a ordem de
+     * execução, que ninguém controla.
      *
-     * As tabelas semeadas pela V2 (categoria, configuracao) ficam de fora de
-     * propósito: elas são parte do estado inicial, não resíduo de teste.
+     * A tabela configuracao é restaurada, e não truncada: ela é semeada
+     * pela migração, e vários testes a alteram. Deixá-la de fora da limpeza
+     * era um furo — o resultado passava a depender de qual teste rodou
+     * antes.
      */
     @BeforeEach
     void limparDadosDeTeste() {
@@ -63,6 +76,17 @@ public abstract class BancoDeTesteBase {
                 TRUNCATE TABLE clique_whatsapp, evento_auditoria, produto_foto, produto, usuario_admin
                 RESTART IDENTITY CASCADE
                 """);
+
+        if (configuracaoSemeada == null) {
+            configuracaoSemeada = new LinkedHashMap<>();
+            jdbcDaLimpeza.query("SELECT chave, valor FROM configuracao", linha -> {
+                configuracaoSemeada.put(linha.getString("chave"), linha.getString("valor"));
+            });
+        } else {
+            jdbcDaLimpeza.update("DELETE FROM configuracao");
+            configuracaoSemeada.forEach((chave, valor) -> jdbcDaLimpeza.update(
+                    "INSERT INTO configuracao (chave, valor) VALUES (?, ?)", chave, valor));
+        }
     }
 
     @DynamicPropertySource

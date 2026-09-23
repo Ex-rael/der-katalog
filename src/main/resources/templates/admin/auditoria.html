@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auditoria — Chima Club</title>
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<header class="barra">
+  <span class="marca">Chima Club</span>
+  <nav>
+    <a th:href="@{/admin/produtos}">Produtos</a>
+    <a th:href="@{/admin/configuracao}">Configuração</a>
+    <a th:href="@{/admin/auditoria}">Auditoria</a>
+  </nav>
+  <form method="post" th:action="@{/admin/logout}">
+    <button type="submit">Sair</button>
+  </form>
+</header>
+
+<main>
+  <h1>Auditoria</h1>
+  <p class="ajuda" style="margin-bottom:24px">
+    Últimos acessos e alterações. Na revisão mensal, procure rajadas de
+    LOGIN_FALHA e alterações que você não reconheça.
+  </p>
+
+  <p class="vazio" th:if="${eventos.isEmpty()}">Nenhum evento registrado ainda.</p>
+
+  <table th:unless="${eventos.isEmpty()}">
+    <thead>
+      <tr>
+        <th>Quando</th>
+        <th>Ação</th>
+        <th>Quem</th>
+        <th>Origem</th>
+        <th>Detalhes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="evento : ${eventos}">
+        <td th:text="${#temporals.format(evento.criadoEm, 'dd/MM/yyyy HH:mm')}">—</td>
+        <td th:text="${evento.acao}">ACAO</td>
+        <td th:text="${evento.usuario != null} ? ${evento.usuario.email} : '—'">—</td>
+        <td th:text="${evento.ip != null} ? ${evento.ip} : '—'">—</td>
+        <!--/* th:text escapa: os detalhes vêm em parte de entrada do usuário. */-->
+        <td th:text="${evento.detalhes}" style="font-size:.82rem;color:var(--salvia)">—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:24px;display:flex;gap:12px">
+    <a class="botao botao-secundario" th:if="${pagina > 0}"
+       th:href="@{/admin/auditoria(pagina=${pagina - 1})}">Página anterior</a>
+    <a class="botao botao-secundario" th:if="${eventos.hasNext()}"
+       th:href="@{/admin/auditoria(pagina=${pagina + 1})}">Próxima página</a>
+  </div>
+</main>
+
+</body>
+</html>
