@@ -41,7 +41,9 @@ public class SegurancaConfig {
     @Order(1)
     SecurityFilterChain cadeiaAdmin(HttpSecurity http,
                                     ManipuladorDeLogin manipulador,
+                                    CabecalhosConfig cabecalhos,
                                     @Value("${app.porta-admin:8081}") int portaAdmin) throws Exception {
+        cabecalhos.aplicar(http);
         http.securityMatcher(requisicao -> requisicao.getLocalPort() == portaAdmin)
             .authorizeHttpRequests(a -> a
                 .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
@@ -72,7 +74,8 @@ public class SegurancaConfig {
 
     @Bean
     @Order(2)
-    SecurityFilterChain cadeiaPublica(HttpSecurity http) throws Exception {
+    SecurityFilterChain cadeiaPublica(HttpSecurity http, CabecalhosConfig cabecalhos) throws Exception {
+        cabecalhos.aplicar(http);
         http.authorizeHttpRequests(a -> a
                 // O despacho interno de erro precisa passar, senão toda
                 // falha vira 403 em vez do status real: um 404 do catálogo

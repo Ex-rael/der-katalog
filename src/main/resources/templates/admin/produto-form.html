@@ -92,10 +92,10 @@
   </form>
 
   <section th:unless="${novo}">
-    <h2 style="font-family:var(--f-display);font-weight:400;margin-top:40px">Fotos</h2>
+    <h2 class="titulo-de-secao">Fotos</h2>
 
-    <form class="formulario" method="post" enctype="multipart/form-data"
-          th:action="@{/admin/produtos/{id}/fotos(id=${produto.id})}" style="margin-top:14px">
+    <form method="post" enctype="multipart/form-data"
+          th:action="@{/admin/produtos/{id}/fotos(id=${produto.id})}" class="formulario formulario-de-envio">
       <label for="arquivos">Enviar fotos</label>
       <input type="file" id="arquivos" name="arquivos" multiple accept=".jpg,.jpeg,.png,.webp">
       <p class="ajuda">JPG, PNG ou WebP, até 10 MB cada e 8 por vez. A imagem é reprocessada pelo sistema.</p>

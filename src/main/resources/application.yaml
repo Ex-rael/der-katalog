@@ -54,6 +54,10 @@ server:
 
 app:
   porta-admin: 8081
+  # HSTS só onde existe TLS. Anunciá-lo sobre http local faria o navegador
+  # exigir https daquele host por um ano, e quem administra a loja ficaria
+  # sem acesso ao painel na própria máquina.
+  hsts-ligado: false
   # Fora do diretório da aplicação, e montado sem permissão de execução em
   # produção (§A08). Em desenvolvimento fica sob ./fotos, que o .gitignore
   # já ignora.

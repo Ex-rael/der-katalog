@@ -22,7 +22,7 @@
 
 <main>
   <h1>Auditoria</h1>
-  <p class="ajuda" style="margin-bottom:24px">
+  <p class="ajuda ajuda-de-topo">
     Últimos acessos e alterações. Na revisão mensal, procure rajadas de
     LOGIN_FALHA e alterações que você não reconheça.
   </p>
@@ -46,12 +46,12 @@
         <td th:text="${evento.usuario != null} ? ${evento.usuario.email} : '—'">—</td>
         <td th:text="${evento.ip != null} ? ${evento.ip} : '—'">—</td>
         <!--/* th:text escapa: os detalhes vêm em parte de entrada do usuário. */-->
-        <td th:text="${evento.detalhes}" style="font-size:.82rem;color:var(--salvia)">—</td>
+        <td class="detalhes-do-evento" th:text="${evento.detalhes}">—</td>
       </tr>
     </tbody>
   </table>
 
-  <div style="margin-top:24px;display:flex;gap:12px">
+  <div class="paginacao">
     <a class="botao botao-secundario" th:if="${pagina > 0}"
        th:href="@{/admin/auditoria(pagina=${pagina - 1})}">Página anterior</a>
     <a class="botao botao-secundario" th:if="${eventos.hasNext()}"

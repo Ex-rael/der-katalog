@@ -289,3 +289,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{
   .busca form{flex-direction:column}
   .busca button{width:100%}
 }
+
+/* Contêiner das definições de símbolo SVG. Era um atributo style= no
+   próprio elemento, e a CSP sem 'unsafe-inline' bloqueia estilo em linha —
+   inclusive em atributo. */
+.definicoes-de-simbolo{position:absolute}

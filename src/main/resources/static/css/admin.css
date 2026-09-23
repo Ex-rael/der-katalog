@@ -121,3 +121,11 @@ td.acoes button{margin:0 2px;padding:5px 12px;font-size:.82rem}
 .galeria figcaption{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}
 .galeria button{margin:0;padding:4px 10px;font-size:.78rem}
 .eh-principal{outline:2px solid var(--salvia);outline-offset:2px}
+
+/* Classes que substituíram atributos style= nos templates. A CSP sem
+   'unsafe-inline' bloqueia estilo em linha, inclusive em atributo. */
+.titulo-de-secao{font-family:var(--f-display);font-weight:400;margin-top:40px}
+.formulario-de-envio{margin-top:14px}
+.ajuda-de-topo{margin-bottom:24px}
+.detalhes-do-evento{font-size:.82rem;color:var(--salvia)}
+.paginacao{margin-top:24px;display:flex;gap:12px}
