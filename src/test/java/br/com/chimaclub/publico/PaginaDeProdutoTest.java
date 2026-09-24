@@ -189,7 +189,7 @@ class PaginaDeProdutoTest extends BancoDeTesteBase {
         assertThat(resposta.getStatus()).isEqualTo(302);
         String destino = resposta.getRedirectedUrl();
 
-        assertThat(destino).startsWith("https://wa.me/5551989250481?text=");
+        assertThat(destino).startsWith("https://api.whatsapp.com/send?phone=5551989250481&text=");
         assertThat(URLDecoder.decode(destino, StandardCharsets.UTF_8))
                 .contains("Cuia Gold em madeira")
                 .contains("/produto/cuia-gold-em-madeira");
@@ -208,13 +208,42 @@ class PaginaDeProdutoTest extends BancoDeTesteBase {
         String csp = mvc.perform(get("/produto/cuia-gold-em-madeira"))
                         .andReturn().getResponse().getHeader("Content-Security-Policy");
 
-        assertThat(csp).contains("form-action 'self' https://wa.me;");
+        assertThat(csp).contains("form-action 'self' https://api.whatsapp.com;");
 
         var resposta = mvc.perform(post("/produto/cuia-gold-em-madeira/whatsapp"))
                           .andReturn().getResponse();
 
         assertThat(resposta.getStatus()).isEqualTo(302);
-        assertThat(resposta.getHeader("Location")).startsWith("https://wa.me/");
+        assertThat(resposta.getHeader("Location")).startsWith("https://api.whatsapp.com/send?phone=");
+    }
+
+    @Test
+    @DisplayName("a origem para onde o clique redireciona está declarada na CSP")
+    void origemDoRedirecionamentoEstaNaCsp() throws Exception {
+        publicar("Cuia Gold em madeira", "89,90", 2, 1);
+
+        // A ligação entre as duas metades do fluxo, que antes não existia:
+        // o destino morava no WhatsappService, a política no CabecalhosConfig,
+        // e nada obrigava um a acompanhar o outro. Mudar o destino sem mexer
+        // na CSP dava build verde e botão quebrado no navegador — foi assim
+        // que o bloqueio chegou em produção.
+        String destino = mvc.perform(post("/produto/cuia-gold-em-madeira/whatsapp"))
+                            .andReturn().getResponse().getHeader("Location");
+        java.net.URI uri = java.net.URI.create(destino);
+        String origem = uri.getScheme() + "://" + uri.getHost();
+
+        String csp = mvc.perform(get("/produto/cuia-gold-em-madeira"))
+                        .andReturn().getResponse().getHeader("Content-Security-Policy");
+
+        assertThat(origem)
+                .as("o destino tem de ser https: http deixaria a conversa "
+                    + "à mercê de quem estiver no meio do caminho")
+                .startsWith("https://");
+
+        assertThat(csp)
+                .as("a CSP precisa declarar %s, senão o navegador barra o "
+                    + "redirecionamento que este mesmo teste acabou de ver sair", origem)
+                .contains("form-action 'self' " + origem + ";");
     }
 
     @Test
@@ -244,7 +273,7 @@ class PaginaDeProdutoTest extends BancoDeTesteBase {
     }
 
     @Test
-    @DisplayName("o destino é sempre wa.me: não há redirecionamento aberto")
+    @DisplayName("o destino é sempre o WhatsApp: não há redirecionamento aberto")
     void naoHaRedirecionamentoAberto() throws Exception {
         publicar("Cuia comum", "89,90", 1, 1);
 
@@ -257,7 +286,7 @@ class PaginaDeProdutoTest extends BancoDeTesteBase {
 
         assertThat(destino)
                 .as("um redirecionamento aberto num domínio de loja é presente para golpista")
-                .startsWith("https://wa.me/")
+                .startsWith("https://api.whatsapp.com/send?phone=")
                 .doesNotContain("site-malicioso");
     }
 

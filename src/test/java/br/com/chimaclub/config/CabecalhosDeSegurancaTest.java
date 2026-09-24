@@ -118,7 +118,7 @@ class CabecalhosDeSegurancaTest extends BancoDeTesteBase {
     }
 
     @Test
-    @DisplayName("a CSP não libera curinga, e o único externo é o wa.me")
+    @DisplayName("a CSP não libera curinga, e o único externo é o WhatsApp")
     void cspNaoLiberaDominioExterno() throws Exception {
         String csp = cabecalho(pega(portaPublica, "/"), "Content-Security-Policy");
 
@@ -131,7 +131,7 @@ class CabecalhosDeSegurancaTest extends BancoDeTesteBase {
                 .doesNotContain("http://");
 
         // A guarda original era "nenhum https:// em lugar nenhum". Ela
-        // deixou de valer quando o wa.me entrou, e o que a substitui precisa
+        // deixou de valer quando o WhatsApp entrou, e o que a substitui precisa
         // ser mais apertada, não mais frouxa: conta quantas fontes externas
         // existem, e em que diretiva. Só afrouxar o assert transformaria
         // esta exceção na porta por onde as próximas entram sem ninguém ver.
@@ -144,13 +144,13 @@ class CabecalhosDeSegurancaTest extends BancoDeTesteBase {
             if (limpa.contains("https://")) {
                 assertThat(limpa)
                         .as("a fonte externa só pode estar em form-action")
-                        .isEqualTo("form-action 'self' https://wa.me");
+                        .isEqualTo("form-action 'self' https://api.whatsapp.com");
             }
         }
     }
 
     @Test
-    @DisplayName("form-action libera o wa.me, e nada além dele")
+    @DisplayName("form-action libera o destino final do WhatsApp, e nada além dele")
     void formActionLiberaSomenteOWhatsapp() throws Exception {
         String csp = cabecalho(pega(portaPublica, "/"), "Content-Security-Policy");
 
@@ -158,16 +158,24 @@ class CabecalhosDeSegurancaTest extends BancoDeTesteBase {
         // o WhatsApp. A CSP cobra form-action do destino do redirecionamento
         // também, então sem esta fonte o navegador barra a ida — em silêncio
         // na página, só com aviso no console.
-        assertThat(csp).contains("form-action 'self' https://wa.me;");
+        assertThat(csp).contains("form-action 'self' https://api.whatsapp.com;");
 
         assertThat(csp)
                 .as("sem caminho de propósito: a CSP ignora caminho vindo de "
                     + "redirecionamento, então o caminho seria enfeite")
-                .doesNotContain("wa.me/");
+                .doesNotContain("api.whatsapp.com/");
+
+        // O wa.me saiu da política junto com o salto que ele custava. Se
+        // voltar, é sinal de que alguém reintroduziu o redirecionamento
+        // intermediário sem perceber que ele era o problema.
+        assertThat(csp)
+                .as("o wa.me não é o destino final: ele redireciona, e "
+                    + "form-action cobra cada salto")
+                .doesNotContain("wa.me");
     }
 
     @Test
-    @DisplayName("a liberação do wa.me vale também na porta administrativa")
+    @DisplayName("a liberação do WhatsApp vale também na porta administrativa")
     void formActionNoPainel() throws Exception {
         // O CabecalhosConfig é compartilhado pelas duas cadeias. A fonte a
         // mais não muda nada para o painel — os formulários dele enviam para

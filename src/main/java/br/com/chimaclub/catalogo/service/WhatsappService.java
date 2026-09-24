@@ -18,8 +18,20 @@ import java.util.Optional;
 @Service
 public class WhatsappService {
 
-    /** Único destino possível. Não vem de parâmetro, nem de configuração. */
-    private static final String BASE = "https://wa.me/";
+    /**
+     * Único destino possível. Não vem de parâmetro, nem de configuração.
+     *
+     * <p>É o api.whatsapp.com e não o wa.me, e a diferença importa por causa
+     * da CSP. O wa.me não é o fim da linha: ele responde 302 para este mesmo
+     * endereço. Como form-action vale em cada salto do redirecionamento, a
+     * política teria de liberar as duas origens — e passar por wa.me ainda
+     * custaria uma viagem a mais e um terceiro a mais vendo o clique. Indo
+     * direto, a cadeia tem um salto só e a CSP libera uma origem só.
+     *
+     * <p>Os dois endereços são documentados pelo WhatsApp para iniciar
+     * conversa; este é o que o outro aponta.
+     */
+    private static final String BASE = "https://api.whatsapp.com/send?phone=";
 
     private static final int LIMITE_DO_REFERER = 300;
 
@@ -55,7 +67,7 @@ public class WhatsappService {
         cliques.save(new CliqueWhatsapp(produto, truncar(referer)));
 
         return Optional.of(BASE + numeroDaLoja()
-                + "?text=" + URLEncoder.encode(mensagem(produto, enderecoDaPagina), StandardCharsets.UTF_8));
+                + "&text=" + URLEncoder.encode(mensagem(produto, enderecoDaPagina), StandardCharsets.UTF_8));
     }
 
     private String numeroDaLoja() {

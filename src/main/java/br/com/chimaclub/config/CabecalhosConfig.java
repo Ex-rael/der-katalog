@@ -33,7 +33,7 @@ public class CabecalhosConfig {
      * site — a defesa contra clickjacking que o X-Frame-Options também dá,
      * mantido por compatibilidade com navegador antigo.
      *
-     * <p><b>A única exceção: https://wa.me em form-action.</b> O botão de
+     * <p><b>A única exceção: https://api.whatsapp.com em form-action.</b> O botão de
      * compra envia um formulário para o próprio site, que registra o clique
      * (§1.3) e responde 302 para o WhatsApp. A especificação da CSP aplica
      * form-action tanto ao endereço do envio quanto ao destino do
@@ -47,15 +47,25 @@ public class CabecalhosConfig {
      * que a loja usa para decidir o que repor. A exceção é de uma diretiva,
      * de um destino, e nada além dela muda.
      *
-     * <p>O endereço vai sem caminho. Escrever https://wa.me/5551999999999
-     * pareceria mais restrito e não seria: a CSP ignora o caminho de uma
-     * fonte quando a URL chega por redirecionamento, justamente para não
-     * vazar para onde o redirecionamento levou. O caminho seria enfeite, e
-     * ainda obrigaria este cabeçalho a ser remontado a cada requisição,
-     * porque o número da loja vive na configuração e pode mudar pelo painel.
-     * O que impede o destino de ser outro não é a CSP: é o WhatsappService,
-     * onde a base é constante, o número vem da configuração com tudo que não
-     * for dígito removido, e nada da requisição entra na URL.
+     * <p>A fonte é api.whatsapp.com, e não wa.me, porque form-action vale em
+     * <i>cada</i> salto do redirecionamento e o wa.me não é o fim da linha:
+     * ele responde 302 para o api.whatsapp.com. Liberar só o wa.me fazia o
+     * navegador barrar o segundo salto — foi o que aconteceu em produção,
+     * com o agravante de que a mensagem de erro aponta a URL do próprio
+     * site, porque a CSP omite o destino do redirecionamento nos relatórios
+     * para não vazá-lo. O serviço passou a redirecionar direto ao destino
+     * final: um salto, uma origem.
+     *
+     * <p>O endereço vai sem caminho. Escrever
+     * https://api.whatsapp.com/send?phone=555199... pareceria mais restrito
+     * e não seria: a CSP ignora o caminho de uma fonte quando a URL chega
+     * por redirecionamento, justamente para não vazar para onde ele levou.
+     * O caminho seria enfeite, e ainda obrigaria este cabeçalho a ser
+     * remontado a cada requisição, porque o número da loja vive na
+     * configuração e muda pelo painel. O que impede o destino de ser outro
+     * não é a CSP: é o WhatsappService, onde a base é constante, o número
+     * vem da configuração com tudo que não for dígito removido, e nada da
+     * requisição entra na URL.
      */
     public static final String POLITICA_DE_CONTEUDO = String.join("; ",
             "default-src 'none'",
@@ -64,7 +74,7 @@ public class CabecalhosConfig {
             "font-src 'self'",
             "script-src 'self'",
             "connect-src 'self'",
-            "form-action 'self' https://wa.me",
+            "form-action 'self' https://api.whatsapp.com",
             "frame-ancestors 'none'",
             "base-uri 'none'",
             "object-src 'none'",
