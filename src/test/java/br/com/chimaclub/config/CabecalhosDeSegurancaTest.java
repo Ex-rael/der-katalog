@@ -118,15 +118,65 @@ class CabecalhosDeSegurancaTest extends BancoDeTesteBase {
     }
 
     @Test
-    @DisplayName("a CSP não libera domínio externo nem curinga")
+    @DisplayName("a CSP não libera curinga, e o único externo é o wa.me")
     void cspNaoLiberaDominioExterno() throws Exception {
         String csp = cabecalho(pega(portaPublica, "/"), "Content-Security-Policy");
 
         assertThat(csp)
-                .as("a Fase 3 hospedou fontes, HTMX e script localmente justamente para isto")
-                .doesNotContain("https://")
-                .doesNotContain("http://")
+                .as("curinga em CSP é o mesmo que não ter CSP")
                 .doesNotContain("*");
+
+        assertThat(csp)
+                .as("http sem s liberaria o destino a quem estiver no meio do caminho")
+                .doesNotContain("http://");
+
+        // A guarda original era "nenhum https:// em lugar nenhum". Ela
+        // deixou de valer quando o wa.me entrou, e o que a substitui precisa
+        // ser mais apertada, não mais frouxa: conta quantas fontes externas
+        // existem, e em que diretiva. Só afrouxar o assert transformaria
+        // esta exceção na porta por onde as próximas entram sem ninguém ver.
+        assertThat(csp.split("https://", -1).length - 1)
+                .as("uma única fonte externa na política inteira: %s", csp)
+                .isEqualTo(1);
+
+        for (String diretiva : csp.split(";")) {
+            String limpa = diretiva.trim();
+            if (limpa.contains("https://")) {
+                assertThat(limpa)
+                        .as("a fonte externa só pode estar em form-action")
+                        .isEqualTo("form-action 'self' https://wa.me");
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("form-action libera o wa.me, e nada além dele")
+    void formActionLiberaSomenteOWhatsapp() throws Exception {
+        String csp = cabecalho(pega(portaPublica, "/"), "Content-Security-Policy");
+
+        // O botão de compra envia para o próprio site, que responde 302 para
+        // o WhatsApp. A CSP cobra form-action do destino do redirecionamento
+        // também, então sem esta fonte o navegador barra a ida — em silêncio
+        // na página, só com aviso no console.
+        assertThat(csp).contains("form-action 'self' https://wa.me;");
+
+        assertThat(csp)
+                .as("sem caminho de propósito: a CSP ignora caminho vindo de "
+                    + "redirecionamento, então o caminho seria enfeite")
+                .doesNotContain("wa.me/");
+    }
+
+    @Test
+    @DisplayName("a liberação do wa.me vale também na porta administrativa")
+    void formActionNoPainel() throws Exception {
+        // O CabecalhosConfig é compartilhado pelas duas cadeias. A fonte a
+        // mais não muda nada para o painel — os formulários dele enviam para
+        // o próprio site — mas o teste registra que foi conferido, e pega o
+        // dia em que alguém separar as políticas e esquecer uma das duas.
+        String csp = cabecalho(pega(portaAdmin, "/admin/login"), "Content-Security-Policy");
+
+        assertThat(csp).isEqualTo(
+                cabecalho(pega(portaPublica, "/"), "Content-Security-Policy"));
     }
 
     @Test

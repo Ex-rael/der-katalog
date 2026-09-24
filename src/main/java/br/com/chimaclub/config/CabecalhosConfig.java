@@ -32,6 +32,30 @@ public class CabecalhosConfig {
      * frame-ancestors 'none' impede que o catálogo seja embutido em outro
      * site — a defesa contra clickjacking que o X-Frame-Options também dá,
      * mantido por compatibilidade com navegador antigo.
+     *
+     * <p><b>A única exceção: https://wa.me em form-action.</b> O botão de
+     * compra envia um formulário para o próprio site, que registra o clique
+     * (§1.3) e responde 302 para o WhatsApp. A especificação da CSP aplica
+     * form-action tanto ao endereço do envio quanto ao destino do
+     * redirecionamento que vier dele, então 'self' sozinho fazia o navegador
+     * bloquear a ida para o WhatsApp — sem mensagem na página, só um aviso
+     * no console.
+     *
+     * <p>Poderia ter sido resolvido trocando o botão por um link direto para
+     * o wa.me, e aí a CSP ficaria sem exceção nenhuma. Não foi, de propósito:
+     * o link direto tira o clique do servidor, e com ele a métrica de procura
+     * que a loja usa para decidir o que repor. A exceção é de uma diretiva,
+     * de um destino, e nada além dela muda.
+     *
+     * <p>O endereço vai sem caminho. Escrever https://wa.me/5551999999999
+     * pareceria mais restrito e não seria: a CSP ignora o caminho de uma
+     * fonte quando a URL chega por redirecionamento, justamente para não
+     * vazar para onde o redirecionamento levou. O caminho seria enfeite, e
+     * ainda obrigaria este cabeçalho a ser remontado a cada requisição,
+     * porque o número da loja vive na configuração e pode mudar pelo painel.
+     * O que impede o destino de ser outro não é a CSP: é o WhatsappService,
+     * onde a base é constante, o número vem da configuração com tudo que não
+     * for dígito removido, e nada da requisição entra na URL.
      */
     public static final String POLITICA_DE_CONTEUDO = String.join("; ",
             "default-src 'none'",
@@ -40,7 +64,7 @@ public class CabecalhosConfig {
             "font-src 'self'",
             "script-src 'self'",
             "connect-src 'self'",
-            "form-action 'self'",
+            "form-action 'self' https://wa.me",
             "frame-ancestors 'none'",
             "base-uri 'none'",
             "object-src 'none'",

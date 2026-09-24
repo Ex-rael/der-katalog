@@ -196,6 +196,28 @@ class PaginaDeProdutoTest extends BancoDeTesteBase {
     }
 
     @Test
+    @DisplayName("a CSP da página de produto permite o envio chegar ao WhatsApp")
+    void cspDaPaginaPermiteOEnvioAoWhatsapp() throws Exception {
+        publicar("Cuia Gold em madeira", "89,90", 2, 1);
+
+        // Os dois lados do mesmo fluxo, no mesmo teste de propósito. A CSP
+        // cobra form-action do destino do redirecionamento, não só do
+        // endereço do envio: com 'self' sozinho o 302 abaixo continuava
+        // saindo igualzinho do servidor, e o navegador o descartava. Um
+        // teste que olhasse só o 302 diria que está tudo bem.
+        String csp = mvc.perform(get("/produto/cuia-gold-em-madeira"))
+                        .andReturn().getResponse().getHeader("Content-Security-Policy");
+
+        assertThat(csp).contains("form-action 'self' https://wa.me;");
+
+        var resposta = mvc.perform(post("/produto/cuia-gold-em-madeira/whatsapp"))
+                          .andReturn().getResponse();
+
+        assertThat(resposta.getStatus()).isEqualTo(302);
+        assertThat(resposta.getHeader("Location")).startsWith("https://wa.me/");
+    }
+
+    @Test
     @DisplayName("nome com caractere especial é codificado, não colado cru na URL")
     void nomeEhCodificadoNaUrl() throws Exception {
         ProdutoForm form = new ProdutoForm();
