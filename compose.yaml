@@ -22,7 +22,8 @@ services:
       retries: 5
 
   app:
-    build: .
+    build: . # puxa do build local
+    #image: 1srael/der-katalog:latest # puxa do dockerhub
     restart: unless-stopped
     depends_on:
       banco: { condition: service_healthy }
