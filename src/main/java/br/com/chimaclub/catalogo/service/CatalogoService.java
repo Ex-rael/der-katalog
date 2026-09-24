@@ -52,6 +52,39 @@ public class CatalogoService {
         return produtos.buscarPublicados(escaparCuringas(termo.trim()), termo.trim());
     }
 
+    /**
+     * Só os produtos de uma categoria, pelo slug dela (§5.1, parâmetro
+     * ?categoria=).
+     *
+     * Categoria inexistente devolve lista vazia, e não o catálogo inteiro:
+     * devolver tudo esconderia o engano de quem digitou o endereço errado, e
+     * um link quebrado que parece funcionar é pior que um que avisa.
+     */
+    @Transactional(readOnly = true)
+    public List<ProdutoResumo> porCategoria(String slugDaCategoria) {
+        if (slugDaCategoria == null || slugDaCategoria.isBlank()) {
+            return publicados();
+        }
+        return categorias.findAllByOrderByOrdemAsc().stream()
+                .filter(categoria -> categoria.getSlug().equals(slugDaCategoria))
+                .findFirst()
+                .map(categoria -> publicados().stream()
+                        .filter(produto -> categoria.getId().equals(produto.categoriaId()))
+                        .toList())
+                .orElseGet(List::of);
+    }
+
+    /**
+     * Os produtos marcados como destaque (§3.3).
+     *
+     * A home só mostra a seção quando há algum: uma faixa vazia com título
+     * "Destaques" é pior que nenhuma.
+     */
+    @Transactional(readOnly = true)
+    public List<ProdutoResumo> destaques() {
+        return produtos.listarDestaques();
+    }
+
     /** Agrupa na ordem das categorias, com os sem categoria por último. */
     @Transactional(readOnly = true)
     public Map<String, List<ProdutoResumo>> agrupadosPorCategoria(List<ProdutoResumo> lista) {
@@ -73,6 +106,16 @@ public class CatalogoService {
             grupos.put("Outros artefatos", semCategoria);
         }
         return grupos;
+    }
+
+    /** As categorias que têm ao menos um produto publicado, para o menu. */
+    @Transactional(readOnly = true)
+    public List<Categoria> categoriasComProduto() {
+        List<ProdutoResumo> publicados = publicados();
+        return categorias.findAllByOrderByOrdemAsc().stream()
+                .filter(categoria -> publicados.stream()
+                        .anyMatch(produto -> categoria.getId().equals(produto.categoriaId())))
+                .toList();
     }
 
     @Transactional(readOnly = true)

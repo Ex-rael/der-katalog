@@ -1,6 +1,9 @@
 /* =========================================================
-   Painel Chima Club — mesma paleta do catálogo público
+   Painel Chima Club — mesma paleta e mesmas fontes do
+   catálogo público.
    ========================================================= */
+
+@import url("/css/fontes.css");
 :root{
   --creme:     #E9E0D0;
   --salvia:    #6D9571;
@@ -139,3 +142,8 @@ td.acoes button{margin:0 2px;padding:5px 12px;font-size:.82rem}
   background:var(--branco);border:1px solid var(--nevoa);padding:12px 14px;
   text-align:center;
 }
+
+/* ---------- Reordenar fotos ---------- */
+.galeria.arrastavel figure{cursor:grab}
+.galeria.arrastavel figure:active{cursor:grabbing}
+.galeria figure.sendo-arrastada{opacity:.45;outline:2px dashed var(--salvia)}

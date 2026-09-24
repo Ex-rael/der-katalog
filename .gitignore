@@ -25,3 +25,10 @@ fotos/
 # Sistema
 .DS_Store
 *.log
+
+# Pacote de implantação: leva secrets/ dentro dele, e um .zip não é
+# alcançado pela regra "secrets/" acima — o arquivo compactado entraria
+# no repositório com a senha do banco e a chave do TOTP dentro.
+chima/
+chima.zip
+*.zip

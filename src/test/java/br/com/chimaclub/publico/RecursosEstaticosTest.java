@@ -20,6 +20,8 @@ class RecursosEstaticosTest extends BancoDeTesteBase {
     void recursosSaoServidosLocalmente() throws Exception {
         String[] recursos = {
                 "/css/chimaclub.css",
+                "/css/fontes.css",
+                "/css/admin.css",
                 "/fontes/marcellus-latin.woff2",
                 "/fontes/marcellus-latin-ext.woff2",
                 "/fontes/pinyon-script-latin.woff2",
@@ -38,27 +40,44 @@ class RecursosEstaticosTest extends BancoDeTesteBase {
     }
 
     @Test
-    @DisplayName("o CSS não pede nada a domínio externo")
-    void cssNaoPedeNadaDeFora() throws Exception {
-        String css = mvc.perform(get("/css/chimaclub.css"))
-                        .andReturn().getResponse().getContentAsString();
+    @DisplayName("nenhum CSS pede coisa de domínio externo")
+    void nenhumCssPedeNadaDeFora() throws Exception {
+        for (String folha : new String[]{"/css/chimaclub.css", "/css/admin.css", "/css/fontes.css"}) {
+            String css = mvc.perform(get(folha)).andReturn().getResponse().getContentAsString();
 
-        assertThat(css)
-                .as("um @import externo faria a CSP precisar de exceção permanente ao Google")
-                .doesNotContain("https://")
-                .doesNotContain("fonts.googleapis")
-                .doesNotContain("fonts.gstatic");
+            assertThat(css)
+                    .as("um @import externo em %s faria a CSP precisar de exceção permanente", folha)
+                    .doesNotContain("https://")
+                    .doesNotContain("fonts.googleapis")
+                    .doesNotContain("fonts.gstatic");
+        }
     }
 
     @Test
-    @DisplayName("o CSS declara as fontes locais com separação de subconjunto")
-    void cssDeclaraFontesLocais() throws Exception {
-        String css = mvc.perform(get("/css/chimaclub.css"))
-                        .andReturn().getResponse().getContentAsString();
+    @DisplayName("as fontes ficam num arquivo só, com separação de subconjunto")
+    void fontesFicamNumArquivoSo() throws Exception {
+        String fontes = mvc.perform(get("/css/fontes.css"))
+                           .andReturn().getResponse().getContentAsString();
 
-        assertThat(css).contains("@font-face").contains("/fontes/");
-        assertThat(css)
+        assertThat(fontes).contains("@font-face").contains("/fontes/");
+        assertThat(fontes)
                 .as("o subconjunto latin cobre os acentos do português; o latin-ext, o resto")
                 .contains("U+0000-00FF");
+    }
+
+    @Test
+    @DisplayName("as duas folhas importam as fontes, e o painel não fica com a fonte do sistema")
+    void asDuasFolhasImportamAsFontes() throws Exception {
+        // O admin.css usava as variáveis de fonte sem nunca declarar as
+        // fontes: o painel inteiro rodava com a serifa do sistema, e o
+        // resultado ainda parecia intencional — por isso ninguém notou.
+        for (String folha : new String[]{"/css/chimaclub.css", "/css/admin.css"}) {
+            String css = mvc.perform(get(folha)).andReturn().getResponse().getContentAsString();
+
+            assertThat(css).as("folha %s", folha).contains("fontes.css");
+            assertThat(css)
+                    .as("se %s usa as variáveis de fonte, precisa das declarações", folha)
+                    .contains("--f-display");
+        }
     }
 }

@@ -73,6 +73,18 @@
       </div>
     </div>
 
+    <div th:unless="${novo}">
+      <label for="slug">Endereço no catálogo</label>
+      <input type="text" id="slug" th:field="*{slug}" maxlength="160">
+      <p class="ajuda">
+        É o fim do link do produto. Ele NÃO muda quando você edita o nome, de
+        propósito: quem já recebeu o link antigo continuaria chegando aqui.
+        Trocar quebra os links já compartilhados no WhatsApp — só mude se
+        tiver certeza.
+      </p>
+      <p class="erro" th:if="${#fields.hasErrors('slug')}" th:errors="*{slug}"></p>
+    </div>
+
     <label for="descricao">Descrição</label>
     <textarea id="descricao" th:field="*{descricao}" maxlength="4000"></textarea>
     <p class="erro" th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}"></p>
@@ -104,16 +116,49 @@
 
     <p class="vazio" th:if="${#lists.isEmpty(fotos)}">Nenhuma foto ainda.</p>
 
-    <div class="galeria" th:unless="${#lists.isEmpty(fotos)}">
-      <figure th:each="foto : ${fotos}" th:classappend="${foto.principal} ? 'eh-principal' : ''">
+    <p class="ajuda" th:unless="${#lists.isEmpty(fotos)}">
+      A ordem define o carrossel da página do produto. Use as setas, ou
+      arraste as fotos se preferir.
+    </p>
+
+    <!--/*
+      A ordem se muda de dois jeitos, e isso é deliberado. As setas são
+      formulários comuns: funcionam sem JavaScript, com teclado e com leitor
+      de tela, como a §7 exige. O arrastar é a camada de cima, acrescentada
+      pelo reordenar-fotos.js, e envia a ordem inteira de uma vez.
+    */-->
+    <div class="galeria" id="galeria-de-fotos"
+         th:unless="${#lists.isEmpty(fotos)}"
+         th:data-destino="@{/admin/produtos/{id}/fotos/ordem(id=${produto.id})}">
+
+      <figure th:each="foto, iteracao : ${fotos}"
+              th:classappend="${foto.principal} ? 'eh-principal' : ''"
+              th:data-foto-id="${foto.id}"
+              draggable="true">
+
         <img th:src="@{/fotos/{arquivo}(arquivo=${foto.arquivoMini})}"
              th:alt="${foto.textoAlt != null} ? ${foto.textoAlt} : ${produto.nome}">
+
         <figcaption>
           <span th:if="${foto.principal}" class="marca-situacao publicado">Principal</span>
 
+          <form th:if="${!iteracao.first}" method="post"
+                th:action="@{/admin/produtos/{id}/fotos/{fotoId}/mover(id=${produto.id},fotoId=${foto.id})}">
+            <input type="hidden" name="direcao" value="cima">
+            <button type="submit" class="botao-secundario"
+                    th:aria-label="'Mover a foto ' + ${iteracao.count} + ' para trás'">←</button>
+          </form>
+
+          <form th:if="${!iteracao.last}" method="post"
+                th:action="@{/admin/produtos/{id}/fotos/{fotoId}/mover(id=${produto.id},fotoId=${foto.id})}">
+            <input type="hidden" name="direcao" value="baixo">
+            <button type="submit" class="botao-secundario"
+                    th:aria-label="'Mover a foto ' + ${iteracao.count} + ' para frente'">→</button>
+          </form>
+
           <form th:unless="${foto.principal}" method="post"
                 th:action="@{/admin/produtos/{id}/fotos/{fotoId}/principal(id=${produto.id},fotoId=${foto.id})}">
-            <button type="submit" class="botao-secundario">Tornar principal</button>
+            <button type="submit" class="botao-secundario">Capa</button>
           </form>
 
           <form method="post"
@@ -123,8 +168,17 @@
         </figcaption>
       </figure>
     </div>
+
+    <!--/* O token vai num formulário à parte, de onde o script o lê: a CSP
+           proíbe script em linha, então ele não pode ser embutido em JS. */-->
+    <form id="formulario-de-ordem" method="post"
+          th:action="@{/admin/produtos/{id}/fotos/ordem(id=${produto.id})}"
+          th:unless="${#lists.isEmpty(fotos)}" hidden>
+    </form>
   </section>
 </main>
+
+<script th:src="@{/js/reordenar-fotos.js}" defer></script>
 
 </body>
 </html>

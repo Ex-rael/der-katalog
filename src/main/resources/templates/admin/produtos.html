@@ -42,6 +42,16 @@
         <option value="rascunho" th:selected="${situacao == 'rascunho'}">Rascunhos</option>
       </select>
     </div>
+    <div>
+      <label for="categoriaId">Categoria</label>
+      <select id="categoriaId" name="categoriaId">
+        <option value="">Todas</option>
+        <option th:each="categoria : ${categorias}"
+                th:value="${categoria.id}"
+                th:selected="${categoriaId != null and categoriaId.toString() == categoria.id.toString()}"
+                th:text="${categoria.nome}">Cuias em madeira</option>
+      </select>
+    </div>
     <button type="submit" class="botao-secundario">Filtrar</button>
   </form>
 
@@ -83,6 +93,11 @@
             <input type="hidden" name="publicar" th:value="${!produto.publicado}">
             <button type="submit" class="botao-secundario"
                     th:text="${produto.publicado} ? 'Despublicar' : 'Publicar'">Publicar</button>
+          </form>
+
+          <form method="post" th:action="@{/admin/produtos/{id}/duplicar(id=${produto.id})}">
+            <button type="submit" class="botao-secundario"
+                    title="Cria um rascunho com os mesmos dados, sem as fotos">Duplicar</button>
           </form>
 
           <form method="post" th:action="@{/admin/produtos/{id}/excluir(id=${produto.id})}">

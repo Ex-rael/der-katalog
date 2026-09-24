@@ -17,6 +17,16 @@ public class ProdutoForm {
     @Size(max = 140, message = "O nome pode ter no máximo 140 caracteres.")
     private String nome;
 
+    /**
+     * Endereço do produto no catálogo (§6.2).
+     *
+     * Vazio na criação: sai do nome. Na edição vem preenchido, e trocá-lo é
+     * ação explícita de quem está na tela — o slug não acompanha a edição do
+     * nome justamente para não quebrar links já compartilhados no WhatsApp.
+     */
+    @Size(max = 160, message = "O endereço pode ter no máximo 160 caracteres.")
+    private String slug;
+
     private UUID categoriaId;
 
     @Size(max = 4000, message = "A descrição pode ter no máximo 4000 caracteres.")
@@ -37,6 +47,8 @@ public class ProdutoForm {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
     public UUID getCategoriaId() { return categoriaId; }
     public void setCategoriaId(UUID categoriaId) { this.categoriaId = categoriaId; }
     public String getDescricao() { return descricao; }

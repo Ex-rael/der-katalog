@@ -36,6 +36,22 @@ public interface ProdutoRepository extends JpaRepository<Produto, UUID> {
             """, nativeQuery = true)
     List<ProdutoResumo> listarPublicados();
 
+    /** Os destacados, na mesma forma da grade. */
+    @Query(value = """
+            SELECT p.id, p.nome, p.slug, p.preco_centavos, p.unidades,
+                   f.arquivo_mini, f.texto_alt,
+                   p.categoria_id, c.nome AS categoria_nome
+              FROM produto p
+              LEFT JOIN produto_foto f ON f.produto_id = p.id AND f.principal
+              LEFT JOIN categoria c ON c.id = p.categoria_id
+             WHERE p.excluido_em IS NULL
+               AND p.publicado
+               AND p.destaque
+             ORDER BY p.ordem, p.criado_em DESC
+             LIMIT 12
+            """, nativeQuery = true)
+    List<ProdutoResumo> listarDestaques();
+
     /**
      * A consulta da §3.4 do documento de projeto.
      *

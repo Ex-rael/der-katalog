@@ -21,7 +21,9 @@ import java.awt.image.BufferedImage;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /** Regras 5 e 6 da §6: foto principal automática e limpeza na exclusão. */
 @Service
@@ -151,10 +153,63 @@ public class FotoService {
                 Map.of("produto_id", produtoId.toString(), "acao", "principal"), requisicao);
     }
 
+    /**
+     * Move uma foto uma posição para cima ou para baixo.
+     *
+     * Existe por acessibilidade, não por preguiça de fazer o arrastar: a §7
+     * do documento exige funcionamento básico sem JavaScript, e arrastar não
+     * funciona sem ele — nem com leitor de tela, nem com teclado. O arrastar
+     * é a camada de cima, para quem tem mouse e script; estes botões são o
+     * caminho que sempre funciona.
+     */
+    @Transactional
+    public void mover(UUID produtoId, UUID fotoId, String direcao, UsuarioAdmin autor,
+                      HttpServletRequest requisicao) {
+
+        int passo = switch (direcao == null ? "" : direcao.toLowerCase()) {
+            case "cima" -> -1;
+            case "baixo" -> 1;
+            default -> throw new RegraDeNegocioException("Direção inválida.");
+        };
+
+        List<ProdutoFoto> daOrdem = fotos.findByProdutoIdOrderByOrdemAsc(produtoId);
+        int posicao = -1;
+        for (int i = 0; i < daOrdem.size(); i++) {
+            if (daOrdem.get(i).getId().equals(fotoId)) {
+                posicao = i;
+                break;
+            }
+        }
+        if (posicao < 0) {
+            throw new RegraDeNegocioException("Foto não encontrada.");
+        }
+
+        int destino = posicao + passo;
+        if (destino < 0 || destino >= daOrdem.size()) {
+            // Já está na ponta. Não é erro: é o botão que a pessoa clicou
+            // sem efeito, e derrubar a tela por isso seria grosseiro.
+            return;
+        }
+
+        ProdutoFoto trocada = daOrdem.set(posicao, daOrdem.get(destino));
+        daOrdem.set(destino, trocada);
+
+        reordenar(produtoId, daOrdem.stream().map(ProdutoFoto::getId).toList(), autor, requisicao);
+    }
+
     @Transactional
     public void reordenar(UUID produtoId, List<UUID> idsNaNovaOrdem, UsuarioAdmin autor,
                           HttpServletRequest requisicao) {
         List<ProdutoFoto> doProduto = fotos.findByProdutoIdOrderByOrdemAsc(produtoId);
+        Set<UUID> pertencem = doProduto.stream().map(ProdutoFoto::getId).collect(Collectors.toSet());
+
+        // Um identificador de foto de outro produto não pode entrar na
+        // ordenação deste: o identificador sozinho não autoriza nada.
+        for (UUID id : idsNaNovaOrdem) {
+            if (!pertencem.contains(id)) {
+                throw new RegraDeNegocioException("Foto não encontrada.");
+            }
+        }
 
         for (int posicao = 0; posicao < idsNaNovaOrdem.size(); posicao++) {
             UUID id = idsNaNovaOrdem.get(posicao);

@@ -9,6 +9,22 @@
 */-->
 <div th:fragment="grade" id="grade">
 
+  <!--/* Atalhos por categoria (§5.1, parâmetro ?categoria=). Links comuns:
+         funcionam com JavaScript desligado e são indexáveis. */-->
+  <nav class="atalhos-de-categoria" th:if="${!#lists.isEmpty(categorias)}" aria-label="Categorias">
+    <a th:href="@{/}" th:classappend="${!filtrando and !buscando} ? 'atalho-ativo' : ''">Tudo</a>
+    <a th:each="cat : ${categorias}"
+       th:href="@{/(categoria=${cat.slug})}"
+       th:classappend="${categoria == cat.slug} ? 'atalho-ativo' : ''"
+       th:text="${cat.nome}">Cuias em madeira</a>
+  </nav>
+
+  <p class="resultado-da-busca" th:if="${filtrando and !buscando}">
+    Mostrando apenas
+    <span th:text="${#maps.isEmpty(grupos)} ? 'esta categoria' : ${grupos.keySet().iterator().next()}">categoria</span>.
+    <a class="limpar-busca" th:href="@{/}">ver o catálogo inteiro</a>
+  </p>
+
   <p class="resultado-da-busca" th:if="${buscando}">
     <span th:if="${total > 0}">
       <span th:text="${total}">0</span>
@@ -21,8 +37,40 @@
 
   <p class="vazio" th:if="${#maps.isEmpty(grupos)}">
     <span th:if="${buscando}">Nada encontrado para “<span th:text="${q}">termo</span>”.</span>
-    <span th:unless="${buscando}">O catálogo está sendo preparado. Volte logo.</span>
+    <span th:if="${filtrando and !buscando}">Nada nesta categoria por enquanto.</span>
+    <span th:unless="${buscando or filtrando}">O catálogo está sendo preparado. Volte logo.</span>
   </p>
+
+  <!--/* Destaques (§3.3). A seção só existe quando há algum marcado: uma
+         faixa vazia com título "Destaques" seria pior que nenhuma. */-->
+  <section th:if="${!#lists.isEmpty(destaques)}">
+    <div class="categoria">
+      <div class="moldura">
+        <svg class="sol-meio" viewBox="0 0 200 84" aria-hidden="true"><use href="#sol-meio"/></svg>
+        <h2>Destaques</h2>
+        <p class="qtd">escolhidas a dedo</p>
+      </div>
+    </div>
+
+    <div class="produtos">
+      <article class="produto" th:each="produto : ${destaques}">
+        <a th:href="@{/produto/{slug}(slug=${produto.slug})}">
+          <div class="foto">
+            <div class="quadro">
+              <img th:if="${produto.temFoto()}"
+                   th:src="@{/fotos/{arquivo}(arquivo=${produto.arquivoMini})}"
+                   th:alt="${produto.alternativoDaFoto()}"
+                   loading="lazy" width="600" height="750">
+              <div th:unless="${produto.temFoto()}" class="sem-foto">sem foto</div>
+            </div>
+            <p class="marca-esgotado" th:if="${produto.esgotado()}">Esgotado</p>
+          </div>
+          <h3 th:text="${produto.nome}">Nome do produto</h3>
+          <p class="preco" th:text="${@preco.formatar(produto.precoCentavos)}">R$ 0,00</p>
+        </a>
+      </article>
+    </div>
+  </section>
 
   <th:block th:each="grupo : ${grupos}">
 

@@ -89,7 +89,19 @@ public class ProdutoService {
 
         // O slug não muda junto com o nome, de propósito: um link já
         // compartilhado no WhatsApp deixaria de funcionar. A troca existe,
-        // mas é ação explícita da tela, não efeito colateral de uma edição.
+        // mas é ação explícita da tela, não efeito colateral de uma edição
+        // — §6.2. Por isso ela só acontece quando o campo vem preenchido e
+        // diferente do que já está gravado.
+        String slugPedido = form.getSlug() == null ? "" : Slugify.de(form.getSlug());
+        if (!slugPedido.isBlank() && !slugPedido.equals(produto.getSlug())) {
+            if (produtos.existsBySlug(slugPedido)) {
+                throw new RegraDeNegocioException(
+                        "Já existe outro produto neste endereço. Escolha um diferente.");
+            }
+            mudancas.put("slug_anterior", produto.getSlug());
+            mudancas.put("slug_novo", slugPedido);
+            produto.setSlug(slugPedido);
+        }
 
         if (form.isPublicado() && !produto.isPublicado()) {
             conferirCondicoesDePublicacao(produto);
@@ -98,6 +110,43 @@ public class ProdutoService {
 
         produtos.save(produto);
         auditoria.registrar(Acao.PRODUTO_ALTERADO, autor, "produto", id, mudancas, requisicao);
+    }
+
+    /**
+     * Duplica um produto (§4.3).
+     *
+     * Copia os dados e NÃO copia as fotos, de propósito. Duplicar serve para
+     * criar a peça irmã — a mesma cuia em outra cor — e nesse caso levar a
+     * foto junto poria a imagem errada no produto novo, com boa chance de
+     * ninguém notar antes de publicar. Sem foto, a regra de publicação
+     * obriga a enviar a certa.
+     *
+     * A cópia nasce como rascunho pelo mesmo motivo: publicada sozinha, ela
+     * apareceria no catálogo com o nome do original.
+     */
+    @Transactional
+    public UUID duplicar(UUID id, UsuarioAdmin autor, HttpServletRequest requisicao) {
+        Produto original = buscarAtivo(id);
+
+        String nomeDaCopia = encurtar(original.getNome() + " (cópia)", 140);
+        Produto copia = new Produto(nomeDaCopia, slugDisponivelPara(nomeDaCopia),
+                original.getPrecoCentavos());
+
+        copia.setDescricao(original.getDescricao());
+        copia.setUnidades(original.getUnidades());
+        copia.setCategoria(original.getCategoria());
+        copia.setOrdem(original.getOrdem());
+        copia.setDestaque(false);
+        copia.setPublicado(false);
+
+        UUID novoId = produtos.save(copia).getId();
+        auditoria.registrar(Acao.PRODUTO_CRIADO, autor, "produto", novoId,
+                Map.of("duplicado_de", id.toString(), "nome", nomeDaCopia), requisicao);
+        return novoId;
+    }
+
+    private static String encurtar(String texto, int limite) {
+        return texto.length() <= limite ? texto : texto.substring(0, limite);
     }
 
     @Transactional

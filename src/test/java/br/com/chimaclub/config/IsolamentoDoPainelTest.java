@@ -129,6 +129,7 @@ class IsolamentoDoPainelTest extends BancoDeTesteBase {
                 "/admin", "/admin/", "/admin/login", "/admin/logout",
                 "/admin/painel", "/admin/produtos", "/admin/produtos/novo",
                 "/admin/configuracao", "/admin/auditoria",
+                "/admin/totp/ativar", "/admin/totp/conferir", "/admin/totp/qr.png",
                 "/actuator", "/actuator/health", "/actuator/env", "/actuator/heapdump"
         };
 

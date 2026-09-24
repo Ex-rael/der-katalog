@@ -52,6 +52,7 @@ public class AdminProdutoController {
     @GetMapping("/admin/produtos")
     public String listar(@RequestParam(required = false) String q,
                          @RequestParam(required = false) String situacao,
+                         @RequestParam(required = false) UUID categoriaId,
                          Model modelo) {
 
         List<Produto> lista = produtos.findAll().stream()
@@ -60,12 +61,19 @@ public class AdminProdutoController {
                         || produto.getNome().toLowerCase().contains(q.toLowerCase()))
                 .filter(produto -> situacao == null || situacao.isBlank()
                         || ("publicado".equals(situacao) == produto.isPublicado()))
+                // Filtro por categoria (§4.3). Com dezessete cuias quase
+                // iguais, é o que separa madeira de porongo num clique.
+                .filter(produto -> categoriaId == null
+                        || (produto.getCategoria() != null
+                            && categoriaId.equals(produto.getCategoria().getId())))
                 .sorted((a, b) -> b.getCriadoEm().compareTo(a.getCriadoEm()))
                 .toList();
 
         modelo.addAttribute("produtos", lista);
         modelo.addAttribute("q", q);
         modelo.addAttribute("situacao", situacao);
+        modelo.addAttribute("categoriaId", categoriaId);
+        modelo.addAttribute("categorias", categorias.findAllByOrderByOrdemAsc());
         return "admin/produtos";
     }
 
@@ -108,6 +116,7 @@ public class AdminProdutoController {
         form.setDestaque(produto.isDestaque());
         form.setOrdem(produto.getOrdem());
         form.setVersao(produto.getVersao());
+        form.setSlug(produto.getSlug());
         if (produto.getCategoria() != null) {
             form.setCategoriaId(produto.getCategoria().getId());
         }
@@ -150,6 +159,44 @@ public class AdminProdutoController {
             redirecionamento.addFlashAttribute("erro", recusa.getMessage());
         }
         return "redirect:/admin/produtos";
+    }
+
+    @PostMapping("/admin/produtos/{id}/duplicar")
+    public String duplicar(@PathVariable UUID id, Principal principal,
+                           HttpServletRequest requisicao, RedirectAttributes redirecionamento) {
+        UUID copia = servico.duplicar(id, autor(principal), requisicao);
+        redirecionamento.addFlashAttribute("aviso",
+                "Cópia criada como rascunho. Ajuste o nome, envie a foto e publique.");
+        return "redirect:/admin/produtos/" + copia;
+    }
+
+    /**
+     * Move uma foto uma posição. É o caminho que funciona sem JavaScript, e
+     * o único que funciona com teclado ou leitor de tela — o arrastar é a
+     * camada de cima (§7).
+     */
+    @PostMapping("/admin/produtos/{id}/fotos/{fotoId}/mover")
+    public String moverFoto(@PathVariable UUID id, @PathVariable UUID fotoId,
+                            @RequestParam String direcao, Principal principal,
+                            HttpServletRequest requisicao) {
+        fotoService.mover(id, fotoId, direcao, autor(principal), requisicao);
+        return "redirect:/admin/produtos/" + id;
+    }
+
+    /**
+     * A ordem inteira de uma vez, usada pelo arrastar.
+     *
+     * POST e não PATCH, como a §5.2 sugeria: o formulário de HTML só fala
+     * GET e POST, e manter um único verbo evita que a rota do arrastar
+     * precise de caminho diferente do resto do painel. A proteção de CSRF
+     * cobre os dois do mesmo jeito.
+     */
+    @PostMapping("/admin/produtos/{id}/fotos/ordem")
+    public String reordenarFotos(@PathVariable UUID id,
+                                 @RequestParam("ids") List<UUID> ids,
+                                 Principal principal, HttpServletRequest requisicao) {
+        fotoService.reordenar(id, ids, autor(principal), requisicao);
+        return "redirect:/admin/produtos/" + id;
     }
 
     @PostMapping("/admin/produtos/{id}/excluir")
