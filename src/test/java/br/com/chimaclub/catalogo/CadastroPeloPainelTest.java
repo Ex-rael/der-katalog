@@ -328,4 +328,73 @@ class CadastroPeloPainelTest extends BancoDeTesteBase {
         assertThat(soMadeira).contains("Cuia de madeira pública");
         assertThat(soMadeira).doesNotContain("Cuia de porongo pública");
     }
+    // ───────────────────────────────────────────────────────────────
+    // O que a tela mostra. Os testes acima falam com os endpoints
+    // direto, e por isso não viram que a tela recusava em silêncio:
+    // o backend cumpria a regra, e a pessoa do outro lado não ficava
+    // sabendo de nada. Estes olham o HTML que chega ao navegador.
+    // ───────────────────────────────────────────────────────────────
+
+    /** O HTML de uma página do painel, pela porta administrativa. */
+    private String tela(String caminho) throws Exception {
+        return mvc.perform(get(caminho)
+                        .session(painel.getSessao())
+                        .with(r -> { r.setLocalPort(PORTA_ADMIN_DE_TESTE); return r; }))
+                .andReturn().getResponse().getContentAsString();
+    }
+
+    @Test
+    @DisplayName("recusar a publicação por falta de foto diz o motivo na tela")
+    void recusaDePublicacaoApareceNaTela() throws Exception {
+        String resposta = painel.enviar(NOVO, NOVO,
+                        "nome", "Cuia sem foto nenhuma",
+                        "precoEmReais", "50,00",
+                        "unidades", "1",
+                        "categoriaId", MADEIRA,
+                        "versao", "0",
+                        "publicado", "true",
+                        "descricao", "peça de teste")
+                .getResponse().getContentAsString();
+
+        assertThat(produtos.findAll())
+                .as("a recusa vale: o produto não pode nascer publicado sem foto")
+                .noneMatch(p -> p.getNome().equals("Cuia sem foto nenhuma"));
+
+        assertThat(resposta)
+                .as("e a pessoa precisa ficar sabendo por quê")
+                .contains("envie ao menos uma foto");
+    }
+
+    @Test
+    @DisplayName("o conflito de edição simultânea também aparece na tela")
+    void conflitoDeVersaoApareceNaTela() throws Exception {
+        UUID id = cadastrar("Cuia disputada", "70,00", "2");
+
+        // Versão 99 é a de uma aba que ficou aberta enquanto outra gravou.
+        String resposta = painel.enviar("/admin/produtos/" + id, "/admin/produtos/" + id,
+                        "nome", "Cuia disputada",
+                        "precoEmReais", "70,00",
+                        "unidades", "2",
+                        "categoriaId", MADEIRA,
+                        "versao", "99",
+                        "descricao", "peça de teste")
+                .getResponse().getContentAsString();
+
+        assertThat(resposta).contains("alterado em outro lugar");
+    }
+
+    @Test
+    @DisplayName("a tela de edição oferece mesmo o envio de fotos")
+    void telaDeEdicaoOfereceEnvioDeFoto() throws Exception {
+        UUID id = cadastrar("Cuia recém-criada", "60,00", "1");
+
+        String edicao = tela("/admin/produtos/" + id);
+
+        assertThat(edicao)
+                .as("sem campo de arquivo não há como pôr foto nenhuma, "
+                    + "e sem foto o produto nunca pode ser publicado")
+                .contains("type=\"file\"")
+                .contains("enctype=\"multipart/form-data\"")
+                .contains("/admin/produtos/" + id + "/fotos");
+    }
 }

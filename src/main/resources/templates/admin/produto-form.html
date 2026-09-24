@@ -28,11 +28,20 @@
 
   <p class="aviso" th:if="${aviso}" th:text="${aviso}"></p>
   <p class="erro" th:if="${erro}" th:text="${erro}"></p>
-  <p class="erro" th:each="falha : ${#fields.globalErrors()}" th:text="${falha}"></p>
 
   <form class="formulario" method="post"
         th:object="${form}"
         th:action="${novo} ? @{/admin/produtos/novo} : @{/admin/produtos/{id}(id=${produto.id})}">
+
+    <!--/*
+      As recusas de regra de negócio moram aqui dentro, e não acima do
+      formulário, porque #fields consulta o objeto do th:object: fora
+      dele não há o que consultar, e o que sai é uma lista vazia — sem
+      erro, sem aviso, sem nada. Foi o que aconteceu: a tela recusava
+      publicar sem foto e recarregava muda, como se o botão não tivesse
+      sido clicado.
+    */-->
+    <p class="erro" th:each="falha : ${#fields.globalErrors()}" th:text="${falha}"></p>
 
     <!--/* Bloqueio otimista: o serviço compara com a versão do banco e
            recusa a gravação se outra aba tiver salvado no meio-tempo. */-->
