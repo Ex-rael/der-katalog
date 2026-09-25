@@ -34,6 +34,33 @@ server:
   address: ${app.endereco-bind}
   # Não anunciar o servidor nem a sua versão (§A05).
   server-header: ""
+  # ---------------------------------------------------------------
+  # O Location de um redirecionamento sai como caminho, e não como
+  # endereço absoluto.
+  #
+  # O padrão do Tomcat é o contrário: ele remonta "/admin/produtos" como
+  # "http://host:porta/admin/produtos", usando o esquema, o host e a porta
+  # que julga que a requisição teve. Atrás de um intermediário esse
+  # julgamento vem dos cabeçalhos X-Forwarded-*, e errar qualquer um dos
+  # três faz o destino apontar para uma ORIGEM diferente da que o navegador
+  # está usando — o X-Forwarded-Host com porta, por exemplo, perde a porta e
+  # o destino sai na 443.
+  #
+  # Aí a CSP entra, e o estrago é silencioso: form-action vale para cada
+  # salto do redirecionamento nascido de um formulário, e um salto de outra
+  # origem é descartado sem mensagem na tela, só com aviso no console. Em
+  # produção isso apareceu como "o login não leva a lugar nenhum": a senha
+  # certa deixava a tela de login parada, e a errada nunca chegava ao
+  # "?erro" — nem o aviso de senha inválida aparecia.
+  #
+  # Um caminho relativo é resolvido pelo próprio navegador contra a página
+  # em que ele está. Por construção não troca de origem, e deixa de depender
+  # do que o intermediário informa. Vale para todas as rotas, não só o
+  # login. O redirecionamento do botão de WhatsApp não muda: ele já é um
+  # endereço absoluto e externo, e o Tomcat o entrega como está.
+  # ---------------------------------------------------------------
+  tomcat:
+    use-relative-redirects: true
   error:
     include-stacktrace: never
     include-message: never
