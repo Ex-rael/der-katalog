@@ -86,12 +86,133 @@ jobs:
     needs: testes
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # Os segredos do Docker Hub estão cadastrados neste environment, e não
+    # no repositório. Sem esta linha o login falha com "Username and
+    # password required" — e a mensagem não diz que o segredo simplesmente
+    # não foi entregue ao job.
+    environment: Docker
+    # Escrita apenas aqui, e apenas porque este job empurra a tag da
+    # versão. O bloco do topo continua em "read": é ele que vale para o
+    # job de testes, que não escreve nada.
+    permissions:
+      contents: write
     # Num pull request a imagem é construída para provar que o
     # Dockerfile ainda fecha, mas não é publicada, e o login não
     # acontece: um PR vindo de um fork não pode alcançar o segredo do
     # Docker Hub.
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          # O cálculo da versão lê as mensagens desde a última tag. Com o
+          # checkout raso não há histórico nem tags para ler, e toda
+          # execução começaria do zero.
+          fetch-depth: 0
+
+      # A versão sai das mensagens de commit, e não de um arquivo que
+      # alguém precisa lembrar de editar: o que já é escrito a cada commit
+      # passa a valer como declaração de compatibilidade.
+      #
+      # Em shell puro, de propósito. Uma action de terceiro para isto
+      # rodaria no mesmo job que alcança o segredo do Docker Hub, e a
+      # conta do que ela ganha não fecha com o que ela custa.
+      - name: calcular a versão
+        id: versao
+        if: github.event_name != 'pull_request'
+        run: |
+          set -Eeuo pipefail
+
+          ULTIMA="$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || true)"
+
+          # HEAD já etiquetado: é o caso do workflow_dispatch reexecutado
+          # sem commit novo. Reaproveita a versão em vez de inventar uma,
+          # senão cada reexecução gastaria um número.
+          NA_TAG="$(git tag --points-at HEAD --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n 1)"
+          if [ -n "$NA_TAG" ]; then
+            echo "HEAD já está em $NA_TAG: reaproveitando a versão"
+            {
+              echo "versao=${NA_TAG#v}"
+              echo "nova=false"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "$ULTIMA" ]; then
+            BASE="v0.0.0"
+            COMMITS="$(git rev-list HEAD)"
+          else
+            BASE="$ULTIMA"
+            COMMITS="$(git rev-list "$ULTIMA..HEAD")"
+          fi
+
+          # Sem commit novo não há o que decidir. Não deveria chegar aqui
+          # depois da verificação acima, mas uma tag anotada fora do lugar
+          # chega.
+          if [ -z "$COMMITS" ]; then
+            echo "nenhum commit desde $BASE: reaproveitando a versão"
+            {
+              echo "versao=${BASE#v}"
+              echo "nova=false"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          NUMERO="${BASE#v}"
+          MAIOR="${NUMERO%%.*}"
+          RESTO="${NUMERO#*.}"
+          MENOR="${RESTO%%.*}"
+          CORRECAO="${RESTO#*.}"
+          # Uma tag como v1.2.3-rc1 entraria com "3-rc1" na correção e
+          # quebraria a aritmética: fica só o que é dígito.
+          CORRECAO="${CORRECAO%%[^0-9]*}"
+
+          # O padrão é subir a correção. Mensagem fora do formato conta
+          # como correção também: publicar sem versão nova seria pior que
+          # publicar uma versão que promete pouco.
+          NIVEL="patch"
+
+          for SHA in $COMMITS; do
+            MENSAGEM="$(git log -1 --format=%B "$SHA")"
+            ASSUNTO="$(printf '%s\n' "$MENSAGEM" | head -n 1)"
+
+            # Incompatibilidade tem duas grafias na convenção, e as duas
+            # valem: o "!" depois do tipo, e o rodapé. Quem escreve uma
+            # não escreve a outra.
+            if printf '%s\n' "$ASSUNTO" | grep -Eq '^[a-zA-Z][a-zA-Z0-9]*(\([^)]*\))?!:' \
+            || printf '%s\n' "$MENSAGEM" | grep -Eq '^BREAKING[ -]CHANGE'; then
+              NIVEL="major"
+              break
+            fi
+
+            # Sem "break": um feat aqui não impede que um commit adiante
+            # seja incompatível, e é o mais grave que decide.
+            if printf '%s\n' "$ASSUNTO" | grep -Eq '^feat(\([^)]*\))?:'; then
+              NIVEL="minor"
+            fi
+          done
+
+          case "$NIVEL" in
+            major) MAIOR=$((MAIOR + 1)); MENOR=0; CORRECAO=0 ;;
+            minor) MENOR=$((MENOR + 1)); CORRECAO=0 ;;
+            patch) CORRECAO=$((CORRECAO + 1)) ;;
+          esac
+
+          VERSAO="$MAIOR.$MENOR.$CORRECAO"
+          NOVA="true"
+
+          # Tag que já existe não é erro: é reexecução. Criá-la de novo
+          # falharia o workflow depois de a imagem já ter sido publicada,
+          # que é o pior momento para falhar.
+          if git rev-parse -q --verify "refs/tags/v$VERSAO" >/dev/null 2>&1 \
+          || [ -n "$(git ls-remote --tags origin "refs/tags/v$VERSAO" 2>/dev/null || true)" ]; then
+            echo "a tag v$VERSAO já existe: não será criada de novo"
+            NOVA="false"
+          fi
+
+          echo "base=$BASE nível=$NIVEL versão=$VERSAO nova=$NOVA"
+          {
+            echo "versao=$VERSAO"
+            echo "nova=$NOVA"
+          } >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
@@ -104,7 +225,18 @@ jobs:
 
       # "latest" é o que o compose.yaml puxa; a tag com o commit é o que
       # permite voltar atrás sabendo exatamente para onde se está
-      # voltando.
+      # voltando; a da versão é a que diz o que mudou entre duas imagens
+      # sem precisar comparar dois SHAs.
+      #
+      # type=raw, e não type=semver: o semver só sabe ler a versão do
+      # próprio gatilho, quando ele é uma tag do git. Aqui o gatilho é a
+      # branch, e a versão vem do passo acima.
+      #
+      # A condição repete "não é pull request" porque o passo acima não
+      # roda em PR: sem isso o valor chegaria vazio, e uma tag vazia
+      # derruba a construção que o PR existe para provar. A comparação com
+      # a branch padrão é o que o {{is_default_branch}} da linha do
+      # "latest" faz — escrita à mão porque não se mistura com expressão.
       - name: definir as tags
         id: etiquetas
         uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
@@ -112,6 +244,7 @@ jobs:
           images: ${{ env.IMAGEM }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.versao.outputs.versao }},enable=${{ github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
             type=sha,format=long
             type=ref,event=pr
 
@@ -130,11 +263,33 @@ jobs:
           provenance: true
           sbom: true
 
+      # A tag do git entra depois da publicação, e nunca antes: uma tag
+      # apontando para um commit cuja imagem não subiu é uma versão que
+      # não existe em lugar nenhum, e quem for buscá-la não acha.
+      #
+      # A versão chega por env, e não por ${{ }} no meio do script: valor
+      # interpolado é montado antes de o shell existir, e o que estiver
+      # dentro dele vira comando.
+      - name: registrar a tag no git
+        if: github.event_name != 'pull_request' && steps.versao.outputs.nova == 'true'
+        env:
+          V: ${{ steps.versao.outputs.versao }}
+        run: |
+          set -Eeuo pipefail
+          # Tag leve: não há autor nem mensagem para assinar, e o commit
+          # que ela aponta já carrega os dois.
+          git tag "v$V"
+          git push origin "v$V"
+          echo "tag v$V registrada"
+
       - name: dizer o que foi publicado
         if: github.event_name != 'pull_request'
         run: |
           {
             echo "### Imagem publicada"
+            echo ""
+            echo "Versão: \`${{ steps.versao.outputs.versao }}\`"
+            echo ""
             echo '```'
             echo "${{ steps.etiquetas.outputs.tags }}"
             echo '```'
