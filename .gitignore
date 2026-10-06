@@ -32,3 +32,13 @@ fotos/
 chima/
 chima.zip
 *.zip
+
+# Terraform — o state e as .tfvars guardam IDs da conta e segredos (token do
+# túnel); o diretório .terraform guarda o binário do provider (~100 MB).
+# O .terraform.lock.hcl, esse sim, é versionado.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
