@@ -1,12 +1,76 @@
-# Chima Club
+# der katalog
 
-Catálogo online de cuias e acessórios para chimarrão, com painel
-administrativo próprio e venda finalizada via WhatsApp.
+Página de catálogo genérica, feita para rodar **selfhosted** numa máquina
+sua, com o [Tailscale](https://tailscale.com) e a [Cloudflare](https://www.cloudflare.com)
+cuidando de levar o tráfego até ela. Cadastre produtos num painel
+administrativo próprio, publique uma vitrine pública e deixe a venda ser
+fechada por conversa, via WhatsApp — sem carrinho, sem pagamento embutido.
 
-Documentos do projeto:
+Nada é pedido a serviço externo em tempo de execução: fontes, HTMX e imagens
+são servidos localmente, e o banco de dados fica na mesma máquina.
+
+> O projeto nasceu como o catálogo de uma loja de cuias para chimarrão, e os
+> documentos de definição e de segurança ainda carregam esse nome.
+
+## Como se encaixa
+
+```
+ visitante ──► Cloudflare ──► túnel ──► :8080  catálogo público ─┐
+                                                                 ├─► PostgreSQL
+ administradora ──► Tailscale (rede privada) ──► :8081  painel ──┘
+```
+
+- **Cloudflare** é a porta pública: DNS, TLS e o túnel que leva a vitrine até
+  a máquina, sem abrir porta no roteador. A infraestrutura fica descrita em
+  Terraform, em [`infra/`](infra/).
+- **Tailscale** é a rede privada: o painel administrativo só é alcançável por
+  quem está na tailnet. Quem chega pela internet não alcança nem a tela de
+  login.
+- São duas portas separadas de propósito — **8080** pública e **8081**
+  administrativa, ambas ligadas ao loopback. Só a pública atravessa para a
+  internet.
+
+## O que tem
+
+**Vitrine pública**
+
+- Home com logo, lema, molduras de categoria e grade de produtos
+- Busca por nome tolerante a acento e a caixa; com HTMX só a grade é trocada
+  e, sem JavaScript, o formulário faz um GET comum e a página volta filtrada
+- Página de produto com foto em destaque, carrossel, disponibilidade e botão
+  de WhatsApp
+- `sitemap.xml` gerado e `robots.txt` com `Crawl-delay`
+
+**Painel administrativo**
+
+- Login com bloqueio de 15 minutos após 5 falhas e mensagem de erro idêntica
+  para todos os motivos
+- Segundo fator TOTP (RFC 6238), com o segredo cifrado em AES-GCM
+- Cadastro, edição, publicação e exclusão lógica de produtos, com slug
+  estável e bloqueio otimista
+- Upload de fotos tratado como hostil: extensão, assinatura dos bytes, limite
+  de dimensão antes de descomprimir, reescrita em WebP e descarte do original
+  com todos os metadados
+- Configuração da loja (nome, número de WhatsApp validado)
+- Auditoria de tudo que altera estado, com o valor anterior
+
+**Endurecimento**
+
+- Cabeçalhos de segurança e CSP em toda resposta, sem `unsafe-inline` e sem
+  domínio externo
+- Limite de requisições por IP em quatro faixas
+- Actuator restrito a `health` e `info`, só na porta administrativa
+- Contêiner sem privilégio: uid 10001, sistema de arquivos somente leitura,
+  zero capacidades do kernel, `/tmp` com `noexec`
+- Backup, restauração testada e limpeza das fotos de produto excluído
+- Varredura de dependências e inventário CycloneDX num perfil próprio
+
+## Documentos
 
 - [`chimaclub-definicao-projeto.md`](chimaclub-definicao-projeto.md) — escopo, arquitetura, modelo de dados
 - [`chimaclub-plano-seguranca.md`](chimaclub-plano-seguranca.md) — controles de segurança e listas de verificação
+- [`docs/operacao.md`](docs/operacao.md) — comandos do dia a dia
+- [`docs/verificacao-do-conteiner.md`](docs/verificacao-do-conteiner.md) — verificações à mão do contêiner
 - [`docs/superpowers/plans/`](docs/superpowers/plans/) — planos de implementação, um por fase
 
 ## Desenvolvimento
@@ -28,9 +92,17 @@ docker compose up -d banco
 ```
 
 O catálogo público responde em <http://127.0.0.1:8080> e o painel
-administrativo em <http://127.0.0.1:8081/admin>. São portas separadas de
-propósito: só a pública atravessa o Tailscale Funnel, e quem chega pela
-internet não alcança nem a tela de login.
+administrativo em <http://127.0.0.1:8081/admin>.
+
+Para criar a primeira administradora:
+
+```bash
+./mvnw spring-boot:run \
+  -Dspring-boot.run.arguments="--criar-admin=voce@exemplo.com --nome=Seu Nome"
+```
+
+A senha é sorteada e impressa uma única vez. Não há recuperação por e-mail,
+e isso é deliberado.
 
 ## Testes
 
@@ -47,102 +119,8 @@ contra um substituto esconderia justamente os erros que importam.
 
 Nada de credencial versionada. A senha do banco fica em
 `secrets/senha_banco.txt`, com permissão `600`, ignorada pelo Git. O
-diretório `secrets/` inteiro está no `.gitignore` desde o primeiro commit.
-
-## Estado atual — Fases 1 a 5, faltando publicar
-
-### Fase 5 — pronto para publicar
-
-- Os 17 produtos do catálogo antigo carregados pelo painel, com as fotos
-  reais reprocessadas em WebP (`scripts/carregar-catalogo-inicial.sh`)
-- `scripts/publicar.sh` — liga o Funnel, com recusas e confirmação por escrito
-- `scripts/verificar-exposicao.sh` — confere o que está exposto
-
-**A publicação em si ainda não foi feita.** Ligar o Funnel torna esta máquina
-alcançável pela internet, e o próprio plano pede que a lista 5.1 esteja
-cumprida antes — inclusive os itens que dependem de quem administra a
-máquina.
-
-### Fases 1 a 4
-
-### Fase 4 — endurecimento
-
-- Cabeçalhos de segurança e CSP em toda resposta das duas portas, sem
-  `unsafe-inline` e sem domínio externo
-- Limite de requisições por IP em quatro faixas, com resolução correta do
-  endereço atrás do Funnel
-- Segundo fator exigido em produção: a senha sozinha não abre o painel
-- Actuator restrito a `health` e `info`, só na porta administrativa
-- Contêiner sem privilégio: uid 10001, sistema de arquivos somente leitura,
-  zero capacidades do kernel, `/tmp` com `noexec`
-- Backup, restauração **testada** e limpeza das fotos de produto excluído
-- Varredura de dependências e inventário CycloneDX num perfil próprio
-
-Verificações à mão registradas em [`docs/verificacao-do-conteiner.md`](docs/verificacao-do-conteiner.md).
-Comandos do dia a dia em [`docs/operacao.md`](docs/operacao.md).
-
-### Fases 1, 2 e 3
-
-### Fase 3 — catálogo público
-
-- Home com a identidade Chima Club: logo, lema em Pinyon Script, molduras de
-  categoria e a grade de produtos do catálogo original
-- Busca por nome que funciona dos dois jeitos — HTMX troca só a grade; sem
-  JavaScript, o formulário faz um GET comum e a página volta filtrada
-- Página de produto com foto em destaque, carrossel, disponibilidade nas três
-  formas da §4.2 e botão do WhatsApp
-- `sitemap.xml` gerado e `robots.txt` com `Crawl-delay`
-- Fontes, HTMX e imagens servidos localmente: nada é pedido a domínio externo
-
-Os 17 produtos do catálogo antigo foram carregados pelo painel e conferidos
-no navegador.
-
-### Fase 2 — painel administrativo
-
-- Login por formulário, com bloqueio de 15 minutos após 5 falhas e mensagem
-  de erro idêntica para todos os motivos
-- Segundo fator TOTP, implementado sobre o RFC 6238 e provado contra os
-  vetores do apêndice B do próprio RFC; segredo cifrado em AES-GCM
-- Cadastro, edição, publicação e exclusão lógica de produtos, com slug
-  estável e bloqueio otimista
-- Upload de fotos tratado como hostil: extensão, assinatura dos bytes,
-  limite de dimensão antes de descomprimir, reescrita em WebP e descarte do
-  original com todos os metadados
-- Configuração da loja com validação do número de WhatsApp
-- Auditoria de tudo que altera estado, com o valor anterior
-
-Para criar a primeira administradora:
-
-```bash
-./mvnw spring-boot:run \
-  -Dspring-boot.run.arguments="--criar-admin=voce@exemplo.com --nome=Seu Nome"
-```
-
-A senha é sorteada e impressa uma única vez. Não há recuperação por e-mail,
-e isso é deliberado.
-
-### Fase 1 — esqueleto
-
-Funciona, com teste automatizado cobrindo cada item:
-
-- Aplicação subindo com dois conectores: 8080 público, 8081 administrativo,
-  ambos ligados ao loopback
-- PostgreSQL 16 em Compose, publicado apenas em `127.0.0.1:5432`
-- Esquema completo criado por Flyway (V1) e dados iniciais semeados (V2),
-  em base limpa e em base já povoada
-- Entidades `Categoria`, `Produto` e `ProdutoFoto` com UUID v7 e bloqueio
-  otimista; preço sempre em centavos
-- Busca tolerante a acento e a caixa, com o índice `gin` comprovadamente
-  aplicável à consulta escrita
-- `/admin` e `/actuator` negados na porta pública — verificado por mutação,
-  ou seja, o teste falha se a proteção for removida
-- `clean` do Flyway desativado, sem cabeçalho `Server`, `TRACE` recusado
-
-### Ainda não existe
-
-- Publicação pelo Tailscale Funnel e o teste de acesso externo (Fase 5)
-- Alerta automático por e-mail ou Telegram (§A09) — depende de escolher um
-  canal; a revisão mensal da auditoria é o que cobre isso por enquanto
+diretório `secrets/` inteiro está no `.gitignore` desde o primeiro commit. O
+mesmo vale para o state e as variáveis do Terraform em `infra/`.
 
 ## Subir em produção
 
@@ -158,8 +136,18 @@ docker compose run --rm --no-deps app \
   java -jar /aplicacao/aplicacao.jar --criar-admin=voce@exemplo.com --nome="Seu Nome"
 ```
 
-Antes de abrir o Funnel, percorra a lista 5.1 do plano de segurança — em
-especial os itens que dependem de você.
+Antes de expor a vitrine à internet, percorra a lista 5.1 do plano de
+segurança — em especial os itens que dependem de quem administra a máquina.
+
+## Estado atual
+
+As fases 1 a 5 estão implementadas e a vitrine está publicada pela
+Cloudflare, com a infraestrutura descrita em [`infra/`](infra/).
+
+- Os scripts `scripts/publicar.sh` e `scripts/verificar-exposicao.sh` foram
+  escritos para o Tailscale Funnel e não descrevem o desenho atual.
+- Ainda não existe alerta automático por e-mail ou Telegram (§A09) — depende
+  de escolher um canal; a revisão mensal da auditoria cobre isso por enquanto.
 
 ## Notas para quem for mexer no código
 
